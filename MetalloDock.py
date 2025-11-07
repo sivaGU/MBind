@@ -1657,28 +1657,54 @@ st.set_page_config(page_title="MetalloDock", layout="wide")
 
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Docking"
-if "nav_open" not in st.session_state:
-    st.session_state.nav_open = True
 
 with st.sidebar:
-    toggle_label = "«" if st.session_state.nav_open else "»"
-    if st.button(toggle_label, key="nav_toggle"):
-        st.session_state.nav_open = not st.session_state.nav_open
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
+            display: none;
+        }
+        div[data-testid="stSidebar"] div[data-testid="stRadio"] > div {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        div[data-testid="stSidebar"] div[data-testid="stRadio"] label {
+            padding: 0;
+        }
+        div[data-testid="stSidebar"] div[data-testid="stRadio"] label > span {
+            border-radius: 6px;
+            padding: 0.35rem 0.6rem;
+            display: block;
+            color: #333;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        div[data-testid="stSidebar"] div[data-testid="stRadio"] label:hover > span {
+            background: #f0f2f6;
+        }
+        div[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"]:checked + span {
+            background: #ffecec;
+            color: #ff4b4b;
+            font-weight: 600;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    if st.session_state.nav_open:
-        st.markdown("#### Navigation")
-        page = st.radio(
-            "Navigation",
-            ["Home", "Documentation", "Docking"],
-            index=["Home", "Documentation", "Docking"].index(st.session_state.current_page),
-            label_visibility="collapsed"
-        )
-        st.session_state.current_page = page
-        st.markdown("---")
-        st.caption("Select a page above")
-    else:
-        page = st.session_state.current_page
-        st.markdown("Navigation hidden")
+    st.markdown("#### Navigation")
+    nav_pages = ["Home", "Documentation", "Docking"]
+    page = st.radio(
+        "Navigation",
+        nav_pages,
+        index=nav_pages.index(st.session_state.current_page),
+        label_visibility="collapsed",
+        key="nav_radio",
+    )
+    st.session_state.current_page = page
+    st.markdown("---")
+    st.caption("Select a page above")
 
 page = st.session_state.current_page
 
@@ -2229,8 +2255,8 @@ else:
         )
 
 st.caption(
-    "Tips:\n"
-    "• If you see “Affinity map for atom type X is not present”, click **Build/Update AD4 maps** with X in Force-include.\n"
-    "• The app now scans **all ligands** to decide which maps to make, and prints per-ligand **Score** or **missing map** in the console.\n"
-    "• Use **No timeout** for tough ligands; or enable soft timeouts with retries/backoff."
+    """Tips:
+• If you see "Affinity map for atom type X is not present", click **Build/Update AD4 maps** with X in Force-include.
+• The app now scans **all ligands** to decide which maps to make, and prints per-ligand **Score** or **missing map** in the console.
+• Use **No timeout** for tough ligands; or enable soft timeouts with retries/backoff."""
 )
