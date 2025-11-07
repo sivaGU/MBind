@@ -1655,25 +1655,32 @@ if _files_gui_setup.exists():
 
 st.set_page_config(page_title="MetalloDock", layout="wide")
 
-if "nav_open" not in st.session_state:
-    st.session_state.nav_open = True
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Docking"
+if "nav_open" not in st.session_state:
+    st.session_state.nav_open = True
 
 with st.sidebar:
     toggle_label = "«" if st.session_state.nav_open else "»"
-    if st.button(toggle_label):
+    if st.button(toggle_label, key="nav_toggle"):
         st.session_state.nav_open = not st.session_state.nav_open
+
     if st.session_state.nav_open:
+        st.markdown("#### Navigation")
         page = st.radio(
             "Navigation",
             ["Home", "Documentation", "Docking"],
-            index=["Home", "Documentation", "Docking"].index(st.session_state.current_page)
+            index=["Home", "Documentation", "Docking"].index(st.session_state.current_page),
+            label_visibility="collapsed"
         )
         st.session_state.current_page = page
+        st.markdown("---")
+        st.caption("Select a page above")
     else:
         page = st.session_state.current_page
-        st.write("Navigation hidden")
+        st.markdown("Navigation hidden")
+
+page = st.session_state.current_page
 
 if page == "Home":
     render_home_page()
@@ -1735,15 +1742,14 @@ with st.expander("Configuration", expanded=True):
             )
 
         # Auto-detect executables and parameters from Files_for_GUI (no user input needed)
-files_gui_dir = work_dir / "Files_for_GUI"
-import sys
-autodetect = False
-if backend == "Vina (box)":
-    autodetect = st.checkbox("Auto-detect metal center (for Vina run)", value=True)
+        files_gui_dir = work_dir / "Files_for_GUI"
+        autodetect = False
+        if backend == "Vina (box)":
+            autodetect = st.checkbox("Auto-detect metal center (for Vina run)", value=True)
 
-smina_exe = _resolve_smina_executable(files_gui_dir, is_windows)
-if backend == "AD4 + SMINA (hybrid)" and smina_exe is None:
-    st.error("SMINA executable not found. Place the binary in `Files_for_GUI/` or `SMINA Linux/` and restart.")
+        smina_exe = _resolve_smina_executable(files_gui_dir, is_windows)
+        if backend == "AD4 + SMINA (hybrid)" and smina_exe is None:
+            st.error("SMINA executable not found. Place the binary in `Files_for_GUI/` or `SMINA Linux/` and restart.")
 
     with c2:
         st.subheader("Grid Box Settings")
