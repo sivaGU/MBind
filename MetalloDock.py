@@ -120,10 +120,6 @@ def _save_uploaded_file(uploaded_file, dst_dir: Path) -> Path:
         f.write(uploaded_file.getbuffer())
     return out_path
 
-@st.cache_data(show_spinner=False)
-def _cached_file_bytes(b: bytes) -> bytes:
-    return b
-
 def autodetect_metal_center(receptor_path: Path, metals=("ZN","MG","MN","FE","CU","CO","NI")) -> Optional[Tuple[float,float,float]]:
     try:
         with open(receptor_path, "r", errors="ignore") as f:
@@ -2246,14 +2242,14 @@ else:
 
     st.download_button(
         "Download results CSV",
-        data=_cached_file_bytes(results_to_csv_bytes(rows)),
+        data=results_to_csv_bytes(rows),
         file_name="pfas_docking_results.csv",
         mime="text/csv",
     )
     if out_dir.exists():
         st.download_button(
             "Download all output PDBQTs (ZIP)",
-            data=_cached_file_bytes(zip_outputs(out_dir)),
+            data=zip_outputs(out_dir),
             file_name=f"{out_dir.name}.zip",
             mime="application/zip",
         )
