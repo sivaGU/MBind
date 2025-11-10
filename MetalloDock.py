@@ -16,48 +16,24 @@ from typing import List, Tuple, Optional, Set, Dict
 
 REPO_ROOT = Path(__file__).resolve().parent
 
-# Demo asset discovery
-DEMO_RECEPTOR_DIR_CANDIDATES = [
-    REPO_ROOT / "Carbonic Anhydrase Receptor Files",
-    REPO_ROOT / "MetalloDock Receptors and Ligands",
-]
-DEMO_LIGAND_DIR_CANDIDATES = [
-    REPO_ROOT / "18 PFAS Ligands",
-    REPO_ROOT / "MetalloDock Receptors and Ligands" / "18 PFAS",
-]
-
-_DEMO_RECEPTOR_DIR = next((p for p in DEMO_RECEPTOR_DIR_CANDIDATES if p.exists()), DEMO_RECEPTOR_DIR_CANDIDATES[0])
-_DEMO_LIGAND_DIR = next((p for p in DEMO_LIGAND_DIR_CANDIDATES if p.exists()), DEMO_LIGAND_DIR_CANDIDATES[0])
-DEMO_RECEPTOR_DIR_FOUND = _DEMO_RECEPTOR_DIR.exists()
-DEMO_LIGAND_DIR_FOUND = _DEMO_LIGAND_DIR.exists()
-
+# Demo presets
 DEMO_RECEPTOR_SETTINGS = {
     "Carbonic Anhydrase I (7Q0D)": {
-        "path": _DEMO_RECEPTOR_DIR / "Carbonic_Anhydrase_I.pdbqt",
         "center": (29.951, 0.420, -4.735),
         "size": (16.0, 18.0, 16.0),
         "spacing": 0.38,
     },
     "Carbonic Anhydrase II (2VVB)": {
-        "path": _DEMO_RECEPTOR_DIR / "Carbonic_Anhydrase_II.pdbqt",
         "center": (-6.421, 0.342, 17.256),
         "size": (20.0, 20.0, 20.0),
         "spacing": 0.38,
     },
 }
-DEMO_LIGAND_SOURCE_DIR = _DEMO_LIGAND_DIR
 
 import streamlit as st
 import pandas as pd
 import argparse
 import sys
-
-demo_assets_dir_global = REPO_ROOT / "MetalloDock Receptors and Ligands"
-DEMO_RECEPTOR_SOURCES = {
-    "Carbonic Anhydrase I (7Q0D)": demo_assets_dir_global / "Carbonic_Anhydrase_I.pdbqt",
-    "Carbonic Anhydrase II (2VVB)": demo_assets_dir_global / "Carbonic_Anhydrase_II.pdbqt",
-}
-DEMO_LIGAND_SOURCE_DIR = demo_assets_dir_global / "18 PFAS"
 
 def render_home_page():
     st.header("Welcome to MetalloDock")
@@ -1309,18 +1285,16 @@ if demo_mode:
     )
     st.session_state["demo_selected_name"] = selected_preset_name
     demo_preset = DEMO_RECEPTOR_SETTINGS[selected_preset_name]
-    receptor_default_path = str(demo_preset["path"])
-    if not Path(receptor_default_path).exists():
-        st.warning(
-            f"Bundled receptor not found at {receptor_default_path}. Upload a receptor below or adjust the path."
-        )
+    receptor_default_path = ""
+else:
+    receptor_default_path = str((work_dir / "receptor.pdbqt").resolve())
 
 st.subheader("Upload Receptor & Ligands")
 upload_col1, upload_col2 = st.columns(2)
 
 with upload_col1:
     st.markdown("**Receptor**")
-    receptor_mode_index = 1 if demo_mode else 0
+    receptor_mode_index = 0
     receptor_input_mode = st.radio(
         "Provide receptor via:",
         ["Upload file", "Local path"],
@@ -1343,8 +1317,6 @@ with upload_col1:
             value=receptor_default_path,
             key=f"{page_mode}_receptor_path"
         ).strip()
-        if demo_mode:
-            st.caption(f"Bundled default path: {receptor_default_path}")
 
 with upload_col2:
     st.markdown("**Ligands**")
@@ -1413,8 +1385,12 @@ if demo_mode:
         "size": preset_size,
         "spacing": preset_spacing,
     }
-    receptor_stem_source = receptor_path if receptor_path else Path(receptor_default_path)
-    maps_prefix_default = str((work_dir / "ad4_maps" / receptor_stem_source.stem).resolve())
+    if receptor_path and receptor_path.stem:
+        receptor_stem = receptor_path.stem
+    else:
+        preset_slug = selected_preset_name or "demo_receptor"
+        receptor_stem = "_".join(preset_slug.split()).lower()
+    maps_prefix_default = str((work_dir / "ad4_maps" / receptor_stem).resolve())
 elif page_mode == "vina":
     allowed_backends = ["Vina (box)"]
     default_backend_label = "Vina (box)"
@@ -1447,6 +1423,7 @@ build_maps_btn = False
 
 with st.expander("Configuration", expanded=True):
     c1, c2 = st.columns(2)
+    config_disabled = demo_mode
     with c1:
         st.subheader("Executables & Scripts")
         if len(allowed_backends) == 1:
@@ -1457,14 +1434,16 @@ with st.expander("Configuration", expanded=True):
                 "Docking backend",
                 allowed_backends,
                 index=allowed_backends.index(default_backend_label),
-                key=f"{page_mode}_backend"
+                key=f"{page_mode}_backend",
+                disabled=config_disabled
             )
         autodetect = False
         if backend == "Vina (box)":
             autodetect = st.checkbox(
                 "Auto-detect metal center (for Vina run)",
                 value=True,
-                key=f"{page_mode}_autodetect"
+                key=f"{page_mode}_autodetect",
+                disabled=config_disabled
             )
     with c2:
         st.subheader("Grid Box Settings")
@@ -1512,21 +1491,24 @@ with st.expander("Configuration", expanded=True):
                 "center_x",
                 value=st.session_state[center_keys["x"]],
                 format="%.3f",
-                key=center_keys["x"]
+                key=center_keys["x"],
+                disabled=config_disabled
             )
         with grid_c2:
             center_y = st.number_input(
                 "center_y",
                 value=st.session_state[center_keys["y"]],
                 format="%.3f",
-                key=center_keys["y"]
+                key=center_keys["y"],
+                disabled=config_disabled
             )
         with grid_c3:
             center_z = st.number_input(
                 "center_z",
                 value=st.session_state[center_keys["z"]],
                 format="%.3f",
-                key=center_keys["z"]
+                key=center_keys["z"],
+                disabled=config_disabled
             )
 
         sz1, sz2, sz3 = st.columns(3)
@@ -1536,7 +1518,8 @@ with st.expander("Configuration", expanded=True):
                 value=st.session_state[size_keys["x"]],
                 min_value=0.0,
                 step=0.25,
-                key=size_keys["x"]
+                key=size_keys["x"],
+                disabled=config_disabled
             )
         with sz2:
             size_y = st.number_input(
@@ -1544,7 +1527,8 @@ with st.expander("Configuration", expanded=True):
                 value=st.session_state[size_keys["y"]],
                 min_value=0.0,
                 step=0.25,
-                key=size_keys["y"]
+                key=size_keys["y"],
+                disabled=config_disabled
             )
         with sz3:
             size_z = st.number_input(
@@ -1552,7 +1536,8 @@ with st.expander("Configuration", expanded=True):
                 value=st.session_state[size_keys["z"]],
                 min_value=0.0,
                 step=0.25,
-                key=size_keys["z"]
+                key=size_keys["z"],
+                disabled=config_disabled
             )
 
         spacing = st.number_input(
@@ -1561,7 +1546,8 @@ with st.expander("Configuration", expanded=True):
             min_value=0.0,
             max_value=1.0,
             step=0.01,
-            key=spacing_key
+            key=spacing_key,
+            disabled=config_disabled
         )
 
         if "AD4 (maps)" in allowed_backends:
@@ -1569,13 +1555,15 @@ with st.expander("Configuration", expanded=True):
                 "AD4 maps prefix (no extension)",
                 value=st.session_state[f"{page_mode}_maps_prefix"],
                 help="Folder will be created if missing (receptor_maps.gpf, *.map, *.fld, etc.).",
-                key=f"{page_mode}_maps_prefix"
+                key=f"{page_mode}_maps_prefix",
+                disabled=config_disabled
             )
             force_extra_types = st.text_input(
                 "Force-include extra ligand atom types when building/patching maps (comma-separated)",
                 value=st.session_state.get(f"{page_mode}_force_types", "S,NA"),
                 help="If you *know* you need maps like S or NA, list them here to guarantee creation.",
-                key=f"{page_mode}_force_types"
+                key=f"{page_mode}_force_types",
+                disabled=config_disabled
             )
             build_maps_btn = st.button(
                 "Build/Update AD4 maps (auto-detect & include missing types)",
@@ -1597,31 +1585,32 @@ is_windows = platform.system() == "Windows"
 
 st.subheader("Docking Parameters")
 p1, p2, p3, p4 = st.columns(4)
+params_disabled = demo_mode
 with p1:
     scoring = "ad4" if backend == "AD4 (maps)" else "vina"
     st.markdown(f"**Scoring function:** `{scoring}`")
 with p2:
-    base_exhaustiveness = st.number_input("Base exhaustiveness", value=64, min_value=1, step=1)
+    base_exhaustiveness = st.number_input("Base exhaustiveness", value=64, min_value=1, step=1, disabled=params_disabled)
 with p3:
-    base_num_modes = st.number_input("Base num_modes", value=10, min_value=1, step=1)
+    base_num_modes = st.number_input("Base num_modes", value=10, min_value=1, step=1, disabled=params_disabled)
 with p4:
-    out_dir_name = st.text_input("Output folder name", value="PFAS_Docking_Results")
+    out_dir_name = st.text_input("Output folder name", value="PFAS_Docking_Results", disabled=params_disabled)
 
 t1, t2, t3, t4 = st.columns(4)
 with t1:
-    timeout_mode = st.selectbox("Timeout mode", ["No timeout (recommended)", "Soft timeout with retries"], index=0)
+    timeout_mode = st.selectbox("Timeout mode", ["No timeout (recommended)", "Soft timeout with retries"], index=0, disabled=params_disabled)
 with t2:
-    timeout_s = st.number_input("Per-ligand timeout (s) if using soft timeout", value=300, min_value=30, step=10)
+    timeout_s = st.number_input("Per-ligand timeout (s) if using soft timeout", value=300, min_value=30, step=10, disabled=params_disabled)
 with t3:
-    max_retries = st.number_input("Max retries on failure", value=2, min_value=0, step=1)
+    max_retries = st.number_input("Max retries on failure", value=2, min_value=0, step=1, disabled=params_disabled)
 with t4:
-    skip_exists = st.checkbox("Skip ligands with existing outputs", value=False)
+    skip_exists = st.checkbox("Skip ligands with existing outputs", value=False, disabled=params_disabled)
 
 b1, b2 = st.columns(2)
 with b1:
-    exhu_backoff = st.number_input("Exhaustiveness multiplier on retry", value=1.5, min_value=1.0, step=0.1)
+    exhu_backoff = st.number_input("Exhaustiveness multiplier on retry", value=1.5, min_value=1.0, step=0.1, disabled=params_disabled)
 with b2:
-    modes_backoff = st.number_input("num_modes multiplier on retry", value=1.25, min_value=1.0, step=0.05)
+    modes_backoff = st.number_input("num_modes multiplier on retry", value=1.25, min_value=1.0, step=0.05, disabled=params_disabled)
 
 # Detect operating system
 exe_ext = ".exe" if is_windows else ""
