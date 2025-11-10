@@ -22,7 +22,7 @@ import argparse
 import sys
 
 # Demo preset defaults
-DEMO_PRESETS: Dict[str, Dict[str, Tuple[float, float, float]]] = {
+DEMO_PRESETS = {
     "Carbonic Anhydrase I": {
         "center": (29.951, 0.420, -4.735),
         "size": (16.0, 18.0, 16.0),
