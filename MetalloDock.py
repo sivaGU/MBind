@@ -1899,6 +1899,9 @@ if test_btn:
         loc = pth if pth else f"{files_gui_dir / name}"
         st.write(f"{name}: {loc} {status}")
 
+if "build_maps_btn" not in locals():
+    build_maps_btn = False
+
 # ==============================
 # AD4 maps builder / updater (auto-detect all ligand types, force-include extras, patch missing)
 # ==============================
