@@ -1336,9 +1336,6 @@ if page_mode == "demo":
                 st.warning("One or more demo ligands were missing; they have been restored in the working directory.")
         if not receptor_path.exists():
             shutil.copy2(receptor_info["path"], receptor_path)
-        st.session_state["demo_receptor_choice"] = receptor_choice
-        st.session_state["demo_receptor_path"] = str(receptor_path)
-        st.session_state["demo_ligand_paths"] = [str(p) for p in ligand_paths]
 else:
     st.subheader("Upload Receptor & Ligands")
     upload_col1, upload_col2 = st.columns(2)
