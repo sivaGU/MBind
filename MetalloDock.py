@@ -1785,6 +1785,9 @@ if build_maps_btn:
             else:
                 maps_prefix_path = maps_prefix_path.resolve()
 
+            if not maps_prefix_path.parts:
+                maps_prefix_path = (work_dir / "ad4_maps" / "receptor_maps").resolve()
+
             force_types = set()
             if force_extra_types:
                 force_types = {tok.strip().upper() for tok in force_extra_types.split(",") if tok.strip()}
@@ -1866,6 +1869,22 @@ if build_maps_btn:
 
                 proc = run_autogrid4(autogrid_exe, maps_dir, gpf_out)
                 if proc.returncode != 0:
+                    debug_msg = [
+                        "AutoGrid4 stderr:\n" + (proc.stderr or ""),
+                        "AutoGrid4 stdout:\n" + (proc.stdout or ""),
+                    ]
+                    glg_file = gpf_out.with_suffix(".glg")
+                    if glg_file.exists():
+                        debug_msg.append("Generated .glg log:\n" + glg_file.read_text(encoding="utf-8", errors="ignore"))
+                    st.error("AutoGrid4 failed while building maps. See console output below.")
+                    with st.expander("AutoGrid4 error output", expanded=True):
+                        for section in debug_msg:
+                            st.code(section or "(empty)", language="text")
+                    failure_log = maps_dir / "autogrid4_last_failure.log"
+                    try:
+                        failure_log.write_text("\n\n".join(debug_msg), encoding="utf-8")
+                    except Exception:
+                        pass
                     raise RuntimeError("AutoGrid4 failed while building maps.")
 
                 map_details = {
@@ -1888,10 +1907,8 @@ if build_maps_btn:
             st.session_state[f"{state_prefix}_maps_prefix"] = str(map_details["maps_prefix"])
 
             maps_available = sorted(list_maps_present(map_details["maps_prefix"]))
-            if maps_available:
-                st.caption(
-                    "Current affinity maps: " + ", ".join(maps_available)
-                )
+            if not maps_available:
+                st.warning("AutoGrid4 completed but no affinity map files were detected. Check the log output for details.")
 
             stdout = map_details.get("stdout")
             stderr = map_details.get("stderr")
@@ -1901,6 +1918,10 @@ if build_maps_btn:
                         st.code(stdout, language="text")
                     if stderr:
                         st.code(stderr, language="text")
+            glg_file = map_details["gpf"].with_suffix(".glg")
+            if glg_file.exists():
+                with st.expander("AutoGrid4 .glg log", expanded=False):
+                    st.code(glg_file.read_text(encoding="utf-8", errors="ignore"), language="text")
         except (FileNotFoundError, PermissionError, ValueError, RuntimeError) as err:
             st.error(str(err))
         except Exception as err:
