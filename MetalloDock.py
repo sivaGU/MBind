@@ -1771,6 +1771,66 @@ zinc_pseudo_py = (files_gui_dir / "zinc_pseudo.py").resolve() if (files_gui_dir 
 base_params = (files_gui_dir / "AD4_parameters.dat").resolve() if (files_gui_dir / "AD4_parameters.dat").exists() else None
 extra_params = (files_gui_dir / "AD4Zn.dat").resolve() if (files_gui_dir / "AD4Zn.dat").exists() else None
 
+if build_maps_btn:
+    if backend != "AD4 (maps)":
+        st.warning("Switch the docking backend to 'AD4 (maps)' before building affinity maps.")
+    else:
+        try:
+            maps_prefix_str = (maps_prefix_input or "").strip()
+            if not maps_prefix_str:
+                raise ValueError("Enter a maps prefix path before building AutoGrid maps.")
+            maps_prefix_path = Path(maps_prefix_str).expanduser()
+            if not maps_prefix_path.is_absolute():
+                maps_prefix_path = (work_dir / maps_prefix_path).resolve()
+            else:
+                maps_prefix_path = maps_prefix_path.resolve()
+
+            force_types = set()
+            if force_extra_types:
+                force_types = {tok.strip().upper() for tok in force_extra_types.split(",") if tok.strip()}
+
+            with st.spinner("Building AutoGrid4 maps…"):
+                map_details = build_ad4_maps(
+                    receptor=receptor_path,
+                    ligands=ligand_paths,
+                    center=(float(center_x), float(center_y), float(center_z)),
+                    size=(float(size_x), float(size_y), float(size_z)),
+                    spacing=float(spacing),
+                    maps_prefix=maps_prefix_path,
+                    autogrid_exe=autogrid_exe,
+                    base_params=base_params,
+                    extra_params=extra_params,
+                    normalize_oxygen=normalize_OA,
+                    force_types=force_types,
+                )
+
+            atom_types = ", ".join(map_details.get("atom_types", [])) or "(none)"
+            st.success(
+                f"AutoGrid4 completed successfully. Maps stored under `{map_details['maps_dir']}` "
+                f"for atom types: {atom_types}."
+            )
+            st.caption(f"GPF file: `{map_details['gpf'].name}`")
+            st.session_state[f"{state_prefix}_maps_prefix"] = str(map_details["maps_prefix"])
+
+            maps_available = sorted(list_maps_present(map_details["maps_prefix"]))
+            if maps_available:
+                st.caption(
+                    "Current affinity maps: " + ", ".join(maps_available)
+                )
+
+            stdout = map_details.get("stdout")
+            stderr = map_details.get("stderr")
+            if stdout or stderr:
+                with st.expander("AutoGrid4 console output", expanded=False):
+                    if stdout:
+                        st.code(stdout, language="text")
+                    if stderr:
+                        st.code(stderr, language="text")
+        except (FileNotFoundError, PermissionError, ValueError, RuntimeError) as err:
+            st.error(str(err))
+        except Exception as err:
+            st.error(f"Unexpected error while building maps: {err}")
+
 # Platform and executable status (silent detection - no warnings)
 
 # Test executables button
@@ -1925,3 +1985,15 @@ def _process_docking_task() -> None:
     st.session_state.docking_task = None
     st.session_state.stop_requested = False
     return
+
+def list_maps_present(maps_prefix: Path) -> Set[str]:
+    """Return set of atom types that already have an affinity map file for this prefix."""
+    present = set()
+    folder = maps_prefix.parent
+    base = maps_prefix.name
+    for p in folder.glob(f"{base}.*.map"):
+        # expecting base.<TYPE>.map
+        t = p.suffixes[-2].lstrip(".") if len(p.suffixes) >= 2 else None
+        if t:
+            present.add(t)
+    return present
