@@ -11,6 +11,7 @@ import random
 import subprocess
 import platform
 import stat
+import hashlib
 from pathlib import Path
 from typing import List, Tuple, Optional, Set, Dict
 
@@ -199,6 +200,21 @@ def _save_uploaded_file(uploaded_file, dst_dir: Path) -> Path:
 @st.cache_data(show_spinner=False)
 def _cached_file_bytes(b: bytes) -> bytes:
     return b
+
+@st.cache_data(show_spinner=False)
+def _create_ligand_zip(out_path: str, log_path: Optional[str]) -> bytes:
+    """Create ZIP archive for a single ligand's results."""
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
+        out_file = Path(out_path)
+        if out_file.exists():
+            zf.write(out_file, arcname=out_file.name)
+        if log_path:
+            log_file = Path(log_path)
+            if log_file.exists():
+                zf.write(log_file, arcname=log_file.name)
+    archive.seek(0)
+    return archive.getvalue()
 
 def autodetect_metal_center(receptor_path: Path, metals=("ZN","MG","MN","FE","CU","CO","NI")) -> Optional[Tuple[float,float,float]]:
     try:
@@ -2123,17 +2139,18 @@ if rows:
         out_path = row.get("Output_File")
         log_path = row.get("Log_File")
         if out_path and Path(out_path).exists():
-            archive = io.BytesIO()
-            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
-                zf.write(out_path, arcname=Path(out_path).name)
-                if log_path and Path(log_path).exists():
-                    zf.write(log_path, arcname=Path(log_path).name)
-            archive.seek(0)
+            # Use cached ZIP creation and stable key based on file path
+            zip_data = _create_ligand_zip(out_path, log_path)
+            # Create a stable, unique key based on the output file path hash
+            key_hash = hashlib.md5(str(out_path).encode()).hexdigest()[:8]
+            stable_key = f"dl_zip_{state_prefix}_{key_hash}"
             st.download_button(
                 label=f"Download {ligand_name} results (ZIP)",
-                data=archive.getvalue(),
+                data=zip_data,
                 file_name=f"{Path(out_path).stem}.zip",
-                key=f"dl_zip_{idx}"
+                key=stable_key,
+                mime="application/zip",
+                use_container_width=False
             )
         else:
             st.caption(f"No PDBQT/log available for {ligand_name}")
@@ -2163,19 +2180,34 @@ if rows:
             pass
 
     csv_bytes = _cached_file_bytes(results_to_csv_bytes(rows))
+    # Use a hash of the rows data for stable key generation
+    rows_hash = hashlib.md5(str(sorted([r.get("Ligand", "") for r in rows])).encode()).hexdigest()[:8]
     st.download_button(
         "Download results CSV",
         data=csv_bytes,
         file_name="metallodock_results.csv",
         mime="text/csv",
+        key=f"dl_csv_{state_prefix}_{rows_hash}",
+        use_container_width=False
     )
-    if out_dir.exists():
-        all_zip = _cached_file_bytes(zip_outputs(out_dir))
+    # Get out_dir from the first row if available, or use work_dir
+    result_out_dir = None
+    if rows:
+        first_out_file = rows[0].get("Output_File")
+        if first_out_file:
+            result_out_dir = Path(first_out_file).parent
+    if not result_out_dir and 'out_dir' in locals():
+        result_out_dir = out_dir
+    if result_out_dir and Path(result_out_dir).exists():
+        all_zip = _cached_file_bytes(zip_outputs(Path(result_out_dir)))
+        dir_hash = hashlib.md5(str(result_out_dir).encode()).hexdigest()[:8]
         st.download_button(
             "Download all output PDBQTs (ZIP)",
             data=all_zip,
-            file_name=f"{out_dir.name}.zip",
+            file_name=f"{Path(result_out_dir).name}.zip",
             mime="application/zip",
+            key=f"dl_all_zip_{state_prefix}_{dir_hash}",
+            use_container_width=False
         )
 else:
     st.info("Run docking to see results.")
@@ -2309,5 +2341,6 @@ def build_ad4_maps(
 def build_ad4_maps_for_selection(*args, **kwargs):
     """Backward-compatible wrapper for legacy code paths."""
     return build_ad4_maps(*args, **kwargs)
+
 
 
