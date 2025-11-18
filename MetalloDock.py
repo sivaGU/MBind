@@ -1395,16 +1395,20 @@ with st.sidebar:
     toggle_label = "«" if st.session_state.nav_open else "»"
     if st.button(toggle_label):
         st.session_state.nav_open = not st.session_state.nav_open
+        st.rerun()
     if st.session_state.nav_open:
-        page = st.radio(
-            "Navigation",
-            nav_pages,
-            index=nav_pages.index(st.session_state.current_page)
-        )
-        st.session_state.current_page = page
+        st.markdown("### Navigation")
+        for nav_page in nav_pages:
+            is_selected = nav_page == st.session_state.current_page
+            button_label = f"**{nav_page}**" if is_selected else nav_page
+            button_type = "primary" if is_selected else "secondary"
+            if st.button(button_label, key=f"nav_{nav_page}", use_container_width=True, type=button_type):
+                st.session_state.current_page = nav_page
+                st.rerun()
     else:
-        page = st.session_state.current_page
         st.write("Navigation hidden")
+
+page = st.session_state.current_page
 
 if page == "Home":
     render_home_page()
