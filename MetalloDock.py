@@ -21,6 +21,16 @@ import pandas as pd
 import argparse
 import sys
 
+# ---- MetalloDock Theme Palette ----
+LIGHT_POWDER_BLUE = "#99C0DE"     # Light Powder Blue
+SOFT_SKY_BLUE = "#74A9D1"         # Soft Sky Blue
+LIGHT_AZURE = "#4B93C4"           # Light Azure / Cornflower Blue
+MEDIUM_STEEL_BLUE = "#2C7CB5"     # Medium Steel Blue
+DEEP_CERULEAN = "#1468A1"         # Deep Cerulean
+RICH_TEAL_BLUE = "#005E8B"        # Rich Teal Blue
+MIDNIGHT_AZURE = "#004E7F"        # Midnight Azure / Deep Ocean Blue
+WHITE = "#FFFFFF"
+
 # Demo preset defaults
 DEMO_PRESETS = {
     "Carbonic Anhydrase I": {
@@ -1276,7 +1286,94 @@ if _files_gui_setup.exists():
 # Streamlit UI
 # ==============================
 
-st.set_page_config(page_title="MetalloDock", layout="wide")
+st.set_page_config(
+    page_title="MetalloDock",
+    layout="wide",
+)
+
+# Inject custom CSS to match blue theme
+THEME_CSS = f"""
+<style>
+/* App background: light blue → dark blue gradient */
+.stApp {{
+    background: linear-gradient(135deg, {LIGHT_POWDER_BLUE} 0%, {SOFT_SKY_BLUE} 35%, {LIGHT_AZURE} 70%, {MIDNIGHT_AZURE} 100%);
+}}
+
+/* Main content container: white card on top of gradient */
+.block-container {{
+    background-color: rgba(255, 255, 255, 0.96);
+    padding: 2rem 2rem 4rem 2rem;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}}
+
+/* Sidebar: vertical light blue → dark blue gradient */
+[data-testid="stSidebar"] {{
+    background: linear-gradient(180deg, {LIGHT_POWDER_BLUE} 0%, {SOFT_SKY_BLUE} 40%, {MIDNIGHT_AZURE} 100%);
+    color: {WHITE};
+}}
+
+/* Sidebar text/icons stay light */
+[data-testid="stSidebar"] * {{
+    color: {WHITE} !important;
+}}
+
+/* Primary buttons (Run Docking, etc.) */
+.stButton > button, .stDownloadButton > button {{
+    background: {MEDIUM_STEEL_BLUE};
+    color: {WHITE};
+    border: none;
+    border-radius: 999px;
+    padding: 0.4rem 1.1rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}}
+
+.stButton > button:hover, .stDownloadButton > button:hover {{
+    background: {DEEP_CERULEAN};
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}}
+
+/* Radio + checkbox accent color */
+input[type="radio"], input[type="checkbox"] {{
+    accent-color: {MEDIUM_STEEL_BLUE};
+}}
+
+/* Progress bar to match palette */
+[data-testid="stProgressBar"] > div > div {{
+    background: linear-gradient(90deg, {LIGHT_POWDER_BLUE}, {SOFT_SKY_BLUE}, {LIGHT_AZURE});
+}}
+
+/* Tabs on a soft blue bar */
+.stTabs [data-baseweb="tab-list"] {{
+    background-color: rgba(153, 192, 222, 0.9);
+    border-radius: 999px;
+    padding: 0.25rem;
+}}
+
+.stTabs [data-baseweb="tab"] {{
+    color: {MEDIUM_STEEL_BLUE};
+    border-radius: 999px;
+}}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {{
+    background-color: {WHITE};
+    color: {RICH_TEAL_BLUE};
+}}
+
+/* Headers in deep blue */
+h1, h2, h3, h4, h5 {{
+    color: {RICH_TEAL_BLUE};
+}}
+
+/* Metric labels, captions, small text slightly muted blue */
+span, p, label {{
+    color: {MIDNIGHT_AZURE};
+}}
+</style>
+"""
+st.markdown(THEME_CSS, unsafe_allow_html=True)
 
 if "nav_open" not in st.session_state:
     st.session_state.nav_open = True
