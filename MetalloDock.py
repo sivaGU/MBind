@@ -1408,6 +1408,48 @@ button[style*="#2c7cb5"] * {{
     color: {WHITE} !important;
 }}
 
+/* File uploader components - revert text to black */
+[data-testid="stFileUploader"],
+[data-testid="stFileUploader"] *,
+[data-testid="stFileUploader"] label,
+[data-testid="stFileUploader"] span,
+[data-testid="stFileUploader"] p,
+[data-testid="stFileUploader"] div,
+[data-testid="stFileUploader"] small,
+.stFileUploader,
+.stFileUploader *,
+.stFileUploader label,
+.stFileUploader span,
+.stFileUploader p,
+.stFileUploader div,
+.stFileUploader small,
+div[data-testid="stFileUploader"] label,
+div[data-testid="stFileUploader"] span,
+div[data-testid="stFileUploader"] p,
+div[data-testid="stFileUploader"] small {{
+    color: #000000 !important;
+}}
+
+/* File uploader button text should also be black */
+[data-testid="stFileUploader"] button,
+[data-testid="stFileUploader"] button *,
+[data-testid="stFileUploader"] .stButton button,
+[data-testid="stFileUploader"] .stButton button *,
+.stFileUploader button,
+.stFileUploader button *,
+.stFileUploader .stButton button,
+.stFileUploader .stButton button * {{
+    color: #000000 !important;
+}}
+
+/* Target the drag and drop area text specifically */
+[data-testid="stFileUploader"] [data-baseweb="file-uploader"],
+[data-testid="stFileUploader"] [data-baseweb="file-uploader"] *,
+[data-testid="stFileUploader"] [data-baseweb="file-uploader"] span,
+[data-testid="stFileUploader"] [data-baseweb="file-uploader"] p {{
+    color: #000000 !important;
+}}
+
 /* Radio + checkbox accent color */
 input[type="radio"], input[type="checkbox"] {{
     accent-color: {MEDIUM_STEEL_BLUE};
