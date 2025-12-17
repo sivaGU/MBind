@@ -1787,28 +1787,33 @@ if saved_prefix:
 build_maps_btn = False
 
 with st.expander("Configuration", expanded=True):
-    c1, c2 = st.columns(2)
-    with c1:
-        st.subheader("Executables & Scripts")
-        if len(allowed_backends) == 1:
-            backend = allowed_backends[0]
-            st.markdown(f"**Docking backend:** `{backend}`")
-        else:
-            backend = st.radio(
-                "Docking backend",
-                allowed_backends,
-                index=allowed_backends.index(default_backend_label),
-                key=f"{state_prefix}_backend"
-            )
-        autodetect = False
-        if backend == "Vina (box)":
-            # Hide label text for Standard AutoDock tab only
-            checkbox_label = "" if page == "Standard AutoDock" else "Auto-detect metal center (for Vina run)"
-            autodetect = st.checkbox(
-                checkbox_label,
-                value=True,
-                key=f"{state_prefix}_autodetect"
-            )
+    # For Standard AutoDock, only show Grid Box Settings
+    if page == "Standard AutoDock":
+        c2 = st.columns(1)[0]
+        # Set backend and autodetect defaults for Standard AutoDock
+        backend = allowed_backends[0] if len(allowed_backends) == 1 else default_backend_label
+        autodetect = True
+    else:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.subheader("Executables & Scripts")
+            if len(allowed_backends) == 1:
+                backend = allowed_backends[0]
+                st.markdown(f"**Docking backend:** `{backend}`")
+            else:
+                backend = st.radio(
+                    "Docking backend",
+                    allowed_backends,
+                    index=allowed_backends.index(default_backend_label),
+                    key=f"{state_prefix}_backend"
+                )
+            autodetect = False
+            if backend == "Vina (box)":
+                autodetect = st.checkbox(
+                    "Auto-detect metal center (for Vina run)",
+                    value=True,
+                    key=f"{state_prefix}_autodetect"
+                )
     with c2:
         st.subheader("Grid Box Settings")
         center_keys = {
