@@ -75,14 +75,6 @@ MetalloDock-main/
 - Downloads for per-ligand PDBQT/logs, CSV summaries, and ZIP archives
 - Dedicated documentation tab mirroring the personalized vaccine pipeline
 
-## Documentation Overview
-The in-app *Documentation* tab walks through the personalized cancer vaccine pipeline:
-1. Generating aggregated MHC files from Partek Flow CSV exports.
-2. Choosing vaccine design modules (Human Protein Atlas vs COSMIC-driven).
-3. Selecting MHC classes and optional epitope characteristics (aliphatic index, GRAVY, pI, half-life, instability, toxicity, IFN-γ release).
-4. Running VaxiJen manually to obtain antigenicity scores.
-5. Processing aggregated files, merging antigenicity, scoring, filtering, and computing population coverage.
-
 ## Demo Tab Assets
 The *Demo* tab is preconfigured for Carbonic Anhydrase I & II receptors. To use it:
 1. **Download the demo assets** from the `Carbonic Anhydrase Receptor Files` and `18 PFAS Ligands` folders in the repository.
@@ -119,6 +111,7 @@ Executables and parameters are auto-detected from `Files_for_GUI/`. Ensure permi
 ## Contact
 Questions, bug reports, or collaboration requests: **Dr. Sivanesan Dakshanamurthy** — sd233@georgetown.edu
 ---
+
 
 
 
