@@ -22,6 +22,13 @@ import pandas as pd
 import argparse
 import sys
 
+# Try importing requests for backend API support
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
 
 # ---- ZincDock Theme Palette ----
 LIGHT_POWDER_BLUE = "#6B9FC0"     # Darker Light Powder Blue
@@ -827,6 +834,92 @@ def find_smina_executable() -> Optional[Path]:
     return None
 
 
+def is_streamlit_cloud() -> bool:
+    """Check if running on Streamlit Cloud."""
+    return (
+        os.environ.get("STREAMLIT_SERVER_URL", "").startswith("https://") or
+        os.environ.get("STREAMLIT_SHARE", "") != ""
+    )
+
+
+def call_gnina_backend_api(
+    backend_url: str,
+    receptor_file: Path,
+    ligand_file: Path,
+    center: Tuple[float, float, float],
+    size: Tuple[float, float, float],
+    num_modes: int = 10,
+    exhaustiveness: int = 8,
+    seed: Optional[int] = None,
+    cnn_scoring: str = "none",
+) -> Tuple[bool, str, int, Optional[Path]]:
+    """
+    Call GNINA backend API to perform docking.
+    
+    Returns (success, affinity_str, nposes, output_file_path).
+    If success=False, output_file_path is None.
+    """
+    if not HAS_REQUESTS:
+        return (False, "", 0, None)
+    
+    endpoint = f"{backend_url.rstrip('/')}/dock"
+    
+    try:
+        with open(receptor_file, "rb") as rf, open(ligand_file, "rb") as lf:
+            files = {
+                "receptor": (receptor_file.name, rf.read(), "application/octet-stream"),
+                "ligand": (ligand_file.name, lf.read(), "application/octet-stream")
+            }
+            
+            data = {
+                "center_x": center[0],
+                "center_y": center[1],
+                "center_z": center[2],
+                "size_x": size[0],
+                "size_y": size[1],
+                "size_z": size[2],
+                "num_modes": num_modes,
+                "exhaustiveness": exhaustiveness,
+                "cnn_scoring": cnn_scoring
+            }
+            
+            if seed is not None:
+                data["seed"] = seed
+            
+            # Make request with timeout
+            response = requests.post(endpoint, files=files, data=data, timeout=600)
+            response.raise_for_status()
+            result = response.json()
+            
+            if result.get("status") == "success":
+                affinities = result.get("affinities", [])
+                aff = affinities[0] if affinities else ""
+                aff_str = f"{aff:.4f}" if aff != "" else ""
+                nposes = result.get("num_poses", len(affinities))
+                
+                # Download output file if available
+                job_id = result.get("job_id")
+                output_file_path = None
+                if job_id:
+                    download_url = f"{backend_url.rstrip('/')}/download/{job_id}/poses.pdbqt"
+                    try:
+                        file_response = requests.get(download_url, timeout=60)
+                        file_response.raise_for_status()
+                        # Return the file content - caller will save it
+                        output_file_path = file_response.content
+                    except:
+                        pass
+                
+                return (True, aff_str, nposes, output_file_path)
+            else:
+                return (False, "", 0, None)
+                
+    except requests.exceptions.RequestException as e:
+        return (False, f"API Error: {str(e)[:100]}", 0, None)
+    except Exception as e:
+        return (False, f"Error: {str(e)[:100]}", 0, None)
+
+
 def parse_gnina_affinities(stdout: str, num_modes: int = 10) -> List[float]:
     """Parse binding affinities from GNINA/SMINA stdout output."""
     import re
@@ -853,7 +946,7 @@ def parse_gnina_affinities(stdout: str, num_modes: int = 10) -> List[float]:
 
 
 def run_gnina_one(
-    smina_exec: Path,
+    smina_exec: Optional[Path],
     receptor_file: Path,
     ligand_file: Path,
     out_pdbqt: Path,
@@ -865,9 +958,34 @@ def run_gnina_one(
     seed: Optional[int],
     timeout_s: Optional[int],
     cnn_scoring: str = "none",  # "none", "rescore", "refinement", "all"
+    backend_url: Optional[str] = None,  # If provided, use backend API instead of local SMINA
 ) -> Tuple[bool, str, int]:
-    """Run GNINA (via SMINA) for a single ligand. Returns (ok, affinity, nposes)."""
+    """Run GNINA (via SMINA locally or backend API). Returns (ok, affinity, nposes)."""
     import re
+    
+    # Use backend API if provided
+    if backend_url:
+        ok, aff_str, nposes, output_content = call_gnina_backend_api(
+            backend_url, receptor_file, ligand_file, center, size,
+            num_modes, exhaustiveness, seed, cnn_scoring
+        )
+        
+        # Save output file if received
+        if ok and output_content:
+            out_pdbqt.parent.mkdir(parents=True, exist_ok=True)
+            with open(out_pdbqt, "wb") as f:
+                f.write(output_content)
+            with open(log_file, "w", encoding="utf-8") as lf:
+                lf.write(f"Backend API: {backend_url}\n")
+                lf.write(f"Status: Success\n")
+                lf.write(f"Affinity: {aff_str}\n")
+                lf.write(f"Poses: {nposes}\n")
+        
+        return (ok, aff_str, nposes)
+    
+    # Otherwise use local SMINA (existing code)
+    if smina_exec is None:
+        return (False, "No SMINA executable or backend URL provided", 0)
     
     out_pdbqt.parent.mkdir(parents=True, exist_ok=True)
     
@@ -960,7 +1078,7 @@ def run_gnina_one(
 
 
 def run_gnina_batch(
-    smina_exec: Path,
+    smina_exec: Optional[Path],
     receptor_file: Path,
     ligand_files: List[Path],
     out_dir: Path,
@@ -976,8 +1094,9 @@ def run_gnina_batch(
     progress_cb=None,
     skip_if_output_exists: bool = False,
     cnn_scoring: str = "none",
+    backend_url: Optional[str] = None,  # If provided, use backend API instead of local SMINA
 ) -> List[dict]:
-    """Run GNINA (via SMINA) docking for multiple ligands."""
+    """Run GNINA (via SMINA locally or backend API) docking for multiple ligands."""
     out_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     
@@ -1007,7 +1126,7 @@ def run_gnina_batch(
             if progress_cb: progress_cb(i, len(ligand_files), lig_name, f"Running (try {tried+1}/{max_retries+1})")
             ok, aff, nposes = run_gnina_one(
                 smina_exec, receptor_file, lig, out_pdbqt, log_file,
-                center, size, ex, nm, seed, per_try_timeout, cnn_scoring
+                center, size, ex, nm, seed, per_try_timeout, cnn_scoring, backend_url
             )
             
             if ok:
@@ -1883,6 +2002,17 @@ if "docking_status_message" not in st.session_state:
 
 st.title(page)
 
+# GNINA-specific info message for Streamlit Cloud
+if page_mode == "gnina":
+    smina_exe_check = find_smina_executable()
+    if smina_exe_check is None:
+        st.warning(
+            "⚠️ **SMINA/GNINA is not available on Streamlit Cloud** (requires compiled C++ binaries). "
+            "This tab will not work on Streamlit Cloud. To use GNINA ML Docking:\n\n"
+            "• **Run ZincDock locally** with SMINA installed via conda (`conda install -c conda-forge smina`)\n"
+            "• **Or use** the 'Standard AutoDock' or 'Metalloprotein Docking' tabs which work on Streamlit Cloud"
+        )
+
 # Working directory chooser
 work_dir_input = st.text_input(
     "Working directory",
@@ -2078,6 +2208,29 @@ with st.expander("Configuration", expanded=True):
                     value=True,
                     key=f"{state_prefix}_autodetect"
                 )
+            
+            # Backend API configuration for GNINA
+            backend_url = None
+            if page_mode == "gnina":
+                st.markdown("---")
+                st.markdown("**Backend API (for Streamlit Cloud)**")
+                try:
+                    # Try to get from Streamlit secrets first
+                    backend_url = st.secrets.get("GNINA_BACKEND_URL", None)
+                except:
+                    pass
+                
+                # Allow user to override or set backend URL
+                backend_url_input = st.text_input(
+                    "GNINA Backend API URL",
+                    value=backend_url or "",
+                    key=f"{state_prefix}_backend_url",
+                    help="Leave empty to use local SMINA, or enter backend API URL (e.g., https://your-backend.railway.app) for cloud deployment"
+                )
+                if backend_url_input and backend_url_input.strip():
+                    backend_url = backend_url_input.strip()
+                else:
+                    backend_url = None
     with c2:
         st.subheader("Grid Box Settings")
         center_keys = {
@@ -2531,14 +2684,36 @@ ad4_rows: List[dict] = []
 if run_btn:
     # Check executable based on page mode
     if page_mode == "gnina":
-        # Detect SMINA executable when actually needed
-        if smina_exe is None:
-            smina_exe = find_smina_executable()
-            if smina_exe:
-                smina_exe = Path(smina_exe)
-        if smina_exe is None or (isinstance(smina_exe, Path) and not smina_exe.exists()):
-            st.error("SMINA/GNINA executable not found. Please ensure SMINA is installed and available in your PATH or conda environment.")
-            st.stop()
+        # Get backend URL from session state (set in Configuration section)
+        backend_url = st.session_state.get(f"{state_prefix}_backend_url", "").strip() if f"{state_prefix}_backend_url" in st.session_state else ""
+        if not backend_url:
+            # Try to get from Streamlit secrets
+            try:
+                backend_url = st.secrets.get("GNINA_BACKEND_URL", "").strip()
+            except:
+                backend_url = ""
+        
+        # If no backend URL, check for local SMINA executable
+        if not backend_url:
+            # Detect SMINA executable when actually needed
+            if smina_exe is None:
+                smina_exe = find_smina_executable()
+                if smina_exe:
+                    smina_exe = Path(smina_exe)
+            if smina_exe is None or (isinstance(smina_exe, Path) and not smina_exe.exists()):
+                st.error("SMINA/GNINA executable not found and no backend URL provided.")
+                st.warning(
+                    "**Note for Streamlit Cloud users:** SMINA/GNINA is a compiled C++ binary that cannot be installed on Streamlit Cloud. "
+                    "To use GNINA ML Docking:\n\n"
+                    "1. **Run locally**: Install SMINA via conda (`conda install -c conda-forge smina`) and run ZincDock.py locally\n"
+                    "2. **Use Backend API**: Enter a backend API URL in the Configuration section (or set GNINA_BACKEND_URL in Streamlit secrets)\n"
+                    "3. **Alternative**: Use the 'Standard AutoDock' or 'Metalloprotein Docking' tabs which work on Streamlit Cloud\n\n"
+                    "For more information, see the GNINA deployment documentation."
+                )
+                st.stop()
+        else:
+            # Backend URL provided, no need for local SMINA
+            smina_exe = None
     else:
         if vina_exe is None or not vina_exe.exists():
             st.error("Vina executable not found.")
@@ -2591,6 +2766,16 @@ if run_btn:
 
     with st.spinner("Running docking…"):
         if page_mode == "gnina":
+            # Get backend URL for this run
+            backend_url_run = st.session_state.get(f"{state_prefix}_backend_url", "").strip() if f"{state_prefix}_backend_url" in st.session_state else ""
+            if not backend_url_run:
+                try:
+                    backend_url_run = st.secrets.get("GNINA_BACKEND_URL", "").strip()
+                except:
+                    backend_url_run = None
+            else:
+                backend_url_run = backend_url_run if backend_url_run else None
+            
             # Run GNINA docking
             rows = run_gnina_batch(
                 smina_exec=smina_exe,
@@ -2609,6 +2794,7 @@ if run_btn:
                 progress_cb=_cb,
                 skip_if_output_exists=bool(skip_exists),
                 cnn_scoring=cnn_scoring,
+                backend_url=backend_url_run,
             )
         else:
             # Run Vina/AD4 docking
