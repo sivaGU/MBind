@@ -217,6 +217,50 @@ def render_gnina_documentation_page():
         "• 64 model files are already included in the repository\n"
         "• These are only needed for CNN scoring modes (rescore, refinement, all)"
     )
+     st.subheader("⑤a Docking parameters reference")
+    st.markdown(
+        "The following parameters control how docking is run and what happens when a run fails or times out."
+    )
+    st.markdown(
+        "**Base exhaustiveness**  \n"
+        "Controls how thoroughly the search algorithm explores the binding site. Higher values (e.g. 32–64) give more sampling and often better poses but take longer. Lower values (e.g. 8–16) are faster and suitable for screening. Default in Demo is 64."
+    )
+    st.markdown(
+        "**Base num_modes**  \n"
+        "Number of binding poses to generate per ligand. Each pose is scored; the best (rank-1) is typically used for analysis. More modes give more options but increase runtime. Default is 10."
+    )
+    st.markdown(
+        "**Timeout mode**  \n"
+        "- *No timeout (recommended)*: Each ligand runs until the docking program finishes. No wall-clock limit. Use this for benchmarking or when you want every run to complete.  \n"
+        "- *Soft timeout with retries*: Each run is limited to a per-ligand time (seconds). If the run does not finish in that time, it is stopped and retried with higher exhaustiveness and num_modes (see below). Use when you have many ligands and want to avoid very long single runs."
+    )
+    st.markdown(
+        "**Per-ligand timeout (s)**  \n"
+        "Only used when *Soft timeout with retries* is selected. Maximum wall-clock time (seconds) allowed for one ligand before the run is stopped and a retry is attempted. For example, 300 means 5 minutes per ligand per try."
+    )
+    st.markdown(
+        "**Max retries on failure**  \n"
+        "When a run fails (e.g. timeout, error, or missing output), MetalBind can retry up to this many times. Each retry uses increased exhaustiveness and num_modes (see multipliers below). 0 = no retries; 1 = one retry after the first failure, etc."
+    )
+    st.markdown(
+        "**Exhaustiveness multiplier on retry**  \n"
+        "On each retry after a failure or timeout, the exhaustiveness used for that ligand is multiplied by this value (and rounded up). Example: base exhaustiveness 64, multiplier 1.5 → first retry uses 96, second retry 144, etc. Values ≥ 1.0 (e.g. 1.25–1.5) give progressively more sampling on retries."
+    )
+    st.markdown(
+        "**num_modes multiplier on retry**  \n"
+        "On each retry, the number of modes is multiplied by this value (and rounded up). Example: base num_modes 10, multiplier 1.25 → first retry uses 13 modes, etc. Together with the exhaustiveness multiplier, this makes retries more thorough."
+    )
+    st.markdown(
+        "**Skip ligands with existing outputs**  \n"
+        "If checked, ligands that already have a non-empty output PDBQT file in the chosen output folder are skipped. Useful for resuming a batch or re-running only failed ligands."
+    )
+    st.markdown(
+        "**Output folder name**  \n"
+        "Name of the subfolder (under your working directory) where PDBQT outputs, logs, and the results table are written. Each run can use a different name to keep results separate."
+    )
+    st.caption(
+        "Retries apply only when a run fails or hits the per-ligand timeout. The same random seed is not reused across retries; each attempt uses a new random seed."
+    )
 
     st.subheader("⑤ Running Docking")
     st.markdown(
@@ -3356,3 +3400,4 @@ def build_ad4_maps(
 def build_ad4_maps_for_selection(*args, **kwargs):
     """Backward-compatible wrapper for legacy code paths."""
     return build_ad4_maps(*args, **kwargs)
+
