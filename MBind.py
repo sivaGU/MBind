@@ -30,7 +30,7 @@ except ImportError:
     HAS_REQUESTS = False
 
 
-# ---- MBind Theme Palette ----
+# ---- MetalBind Theme Palette ----
 LIGHT_POWDER_BLUE = "#6B9FC0"     # Darker Light Powder Blue
 SOFT_SKY_BLUE = "#4A7FA8"         # Darker Soft Sky Blue
 LIGHT_AZURE = "#2D6B94"           # Darker Light Azure
@@ -89,9 +89,9 @@ DEMO_PARAM_DEFAULTS = {
 }
 
 def render_home_page():
-    st.header("Welcome to MBind")
+    st.header("Welcome to MetalBind")
     st.write(
-        "MBind streamlines AutoDock4 map-based docking for metalloprotein projects. "
+        "MetalBind streamlines AutoDock4 map-based docking for metalloprotein projects. "
         "Use this interface to prepare receptors and ligands, build AD4 maps, and run either "
         "classical Vina or AD4 scoring workflows from a single place."
     )
@@ -104,7 +104,7 @@ def render_home_page():
     )
     st.subheader("Workflow Overview")
     st.markdown(
-        "1. Choose a working directory (MBind will create the required folders there).\n"
+        "1. Choose a working directory (MetalBind will create the required folders there).\n"
         "2. Load a receptor from file or path; normalization and optional pseudo atom insertion run automatically.\n"
         "3. Prepare ligands from a source folder or upload ready-to-dock PDBQT files.\n"
         "4. Build or update AD4 maps so that every ligand atom type is covered.\n"
@@ -123,12 +123,12 @@ def render_home_page():
     )
     st.subheader("Automation Tip")
     st.write(
-        "The CLI entry point for MBind (`python MetalBind.py --cli ...`) shares the same code paths as the GUI. "
+        "The CLI entry point (`python MetalBind.py --cli ...`) shares the same code paths as the GUI. "
         "Use it to script batch runs after maps are prepared."
     )
 
 def render_gnina_documentation_page():
-    st.header("GNINA ML Docking — Documentation")
+    st.header("GNINA ML Docking - Documentation")
     st.write(
         "Welcome to the GNINA ML Docking documentation! This guide covers everything you need to know about "
         "using GNINA (or SMINA) for molecular docking with machine learning-enhanced scoring."
@@ -139,18 +139,18 @@ def render_gnina_documentation_page():
         "**GNINA** is a molecular docking program with integrated support for scoring and optimizing ligands "
         "using convolutional neural networks (CNNs). It is a fork of SMINA, which itself is a fork of AutoDock Vina. "
         "GNINA provides:\n\n"
-        "• **Empirical scoring** (like Vina/SMINA) for fast docking\n"
-        "• **CNN scoring** for improved binding affinity predictions\n"
-        "• **CNN refinement** to optimize docked poses\n"
-        "• **Flexible input formats** (PDB, PDBQT, MOL2, SDF)\n"
-        "• **Zinc-aware docking** support for metalloproteins"
+        "- **Empirical scoring** (like Vina/SMINA) for fast docking\n"
+        "- **CNN scoring** for improved binding affinity predictions\n"
+        "- **CNN refinement** to optimize docked poses\n"
+        "- **Flexible input formats** (PDB, PDBQT, MOL2, SDF)\n"
+        "- **Zinc-aware docking** support for metalloproteins"
     )
 
-    st.subheader("① File Preparation")
+    st.subheader("1. File Preparation")
     st.markdown(
         "**Receptors:**\n"
-        "• **Format**: PDB or PDBQT files\n"
-        "• **Provided Zinc Metal Protein Receptors**: You can use the pre-configured Zinc Metal Protein receptors:\n"
+        "- **Format**: PDB or PDBQT files\n"
+        "- **Provided Zinc Metal Protein Receptors**: You can use the pre-configured Zinc Metal Protein receptors:\n"
         "  - `(DEMO) Zinc Metal Protein Receptors/hACE.pdbqt`\n"
         "  - `(DEMO) Zinc Metal Protein Receptors/HDAC2.pdbqt`\n"
         "  - `(DEMO) Zinc Metal Protein Receptors/HDAC8_with_Hydroxamic_Acid.pdbqt`\n"
@@ -159,71 +159,213 @@ def render_gnina_documentation_page():
         "  - `(DEMO) Zinc Metal Protein Receptors/Human_Neutral_Endopeptidase.pdbqt`\n"
         "  - `(DEMO) Zinc Metal Protein Receptors/Leukotriene.pdbqt`\n"
         "  - `(DEMO) Zinc Metal Protein Receptors/ADAMTS-5.pdbqt`\n"
-        "• **Your Own Receptors**: Upload any PDB or PDBQT receptor file\n\n"
+        "- **Your Own Receptors**: Upload any PDB or PDBQT receptor file\n\n"
         "**Ligands:**\n"
-        "• **Formats**: MOL2, SDF, PDBQT, or PDB files\n"
-        "• **Provided Ligands**: You can use the 8 endogenous ligands from `(DEMO) Ligands/` folder\n"
-        "• **Your Own Ligands**: Upload any ligand files in supported formats\n"
-        "• **Batch Processing**: Upload multiple ligands at once for batch docking"
+        "- **Formats**: MOL2, SDF, PDBQT, or PDB files\n"
+        "- **Provided Ligands**: You can use the 8 endogenous ligands from `(DEMO) Ligands/` folder\n"
+        "- **Your Own Ligands**: Upload any ligand files in supported formats\n"
+        "- **Batch Processing**: Upload multiple ligands at once for batch docking"
     )
 
-    st.subheader("② Grid Box Configuration")
+    st.subheader("2. Grid Box Configuration")
     st.markdown(
         "**Grid Box Center (x, y, z)**:\n"
-        "• The center coordinates of the search space in Angstroms\n"
-        "• For CA receptors, typical centers are around the zinc binding site\n"
-        "• You can manually enter coordinates or use the metal center detection\n\n"
+        "- The center coordinates of the search space in Angstroms\n"
+        "- For CA receptors, typical centers are around the zinc binding site\n"
+        "- You can manually enter coordinates or use the metal center detection\n\n"
         "**Grid Box Size**:\n"
-        "• The dimensions of the search space (width, height, depth) in Angstroms\n"
-        "• Default: 20.0 × 20.0 × 20.0 Å\n"
-        "• Larger boxes = more search space but slower docking\n\n"
+        "- The dimensions of the search space (width, height, depth) in Angstroms\n"
+        "- Default: 20.0 x 20.0 x 20.0 A\n"
+        "- Larger boxes = more search space but slower docking\n\n"
         "**Grid Spacing**:\n"
-        "• The resolution of the grid in Angstroms\n"
-        "• Default: 0.375 Å (same as AutoDock Vina)\n"
-        "• Smaller spacing = higher resolution but slower computation"
+        "- The resolution of the grid in Angstroms\n"
+        "- Default: 0.375 Angstrom (same as AutoDock Vina)\n"
+        "- Smaller spacing = higher resolution but slower computation"
     )
 
-    st.subheader("③ Docking Parameters")
+    st.subheader("3. Docking Parameters")
     st.markdown(
         "**Exhaustiveness**:\n"
-        "• Controls how thoroughly GNINA searches the conformational space\n"
-        "• Range: 1-100 (default: 8)\n"
-        "• Higher values = better sampling but slower (recommended: 8-32)\n\n"
+        "- Controls how thoroughly GNINA searches the conformational space\n"
+        "- Range: 1-100 (default: 8)\n"
+        "- Higher values = better sampling but slower (recommended: 8-32)\n\n"
         "**Number of Modes**:\n"
-        "• Number of binding poses to generate\n"
-        "• Default: 9 poses\n"
-        "• More poses = more diverse binding conformations\n\n"
+        "- Number of binding poses to generate\n"
+        "- Default: 9 poses\n"
+        "- More poses = more diverse binding conformations\n\n"
         "**CNN Scoring Mode**:\n"
-        "• **none**: Use only empirical scoring (fastest, SMINA-compatible)\n"
-        "• **rescore**: Dock with empirical scoring, then rescore with CNN\n"
-        "• **refinement**: Dock with empirical scoring, then refine poses with CNN\n"
-        "• **all**: Use CNN for both rescoring and refinement (slowest, most accurate)\n\n"
+        "- **none**: Use only empirical scoring (fastest, SMINA-compatible)\n"
+        "- **rescore**: Dock with empirical scoring, then rescore with CNN\n"
+        "- **refinement**: Dock with empirical scoring, then refine poses with CNN\n"
+        "- **all**: Use CNN for both rescoring and refinement (slowest, most accurate)\n\n"
         "**Note**: CNN scoring requires model files (`gnina_models/*.pt`). If not available, only empirical scoring will be used."
     )
 
-    st.subheader("④ Backend Configuration")
+    st.subheader("4. Backend Configuration")
     st.markdown(
         "**Local Execution**:\n"
-        "• GNINA/SMINA executable must be in `Files_for_GUI/` or in your system PATH\n"
-        "• On Streamlit Cloud, place the Linux binary in `Files_for_GUI/gnina` or `Files_for_GUI/smina`\n"
-        "• Make sure the executable has execute permissions (`chmod +x`)\n\n"
+        "- GNINA/SMINA executable must be in `Files_for_GUI/` or in your system PATH\n"
+        "- On Streamlit Cloud, place the Linux binary in `Files_for_GUI/gnina` or `Files_for_GUI/smina`\n"
+        "- Make sure the executable has execute permissions (`chmod +x`)\n\n"
         "**Backend API (for Streamlit Cloud)**:\n"
-        "• If GNINA/SMINA is not available locally, you can use a backend API\n"
-        "• Enter the backend URL in the Configuration section\n"
-        "• Default: `https://gnina-backend.railway.app`\n"
-        "• The backend handles GNINA execution and returns results\n\n"
+        "- If GNINA/SMINA is not available locally, you can use a backend API\n"
+        "- Enter the backend URL in the Configuration section\n"
+        "- Default: `https://gnina-backend.railway.app`\n"
+        "- The backend handles GNINA execution and returns results\n\n"
         "**Model Files**:\n"
-        "• CNN model files (`.pt`) should be in `Files_for_GUI/gnina_models/`\n"
-        "• 64 model files are already included in the repository\n"
-        "• These are only needed for CNN scoring modes (rescore, refinement, all)"
+        "- CNN model files (`.pt`) should be in `Files_for_GUI/gnina_models/`\n"
+        "- 64 model files are already included in the repository\n"
+        "- These are only needed for CNN scoring modes (rescore, refinement, all)"
     )
-     st.subheader("⑤a Docking parameters reference")
+
+    st.subheader("5. Running Docking")
+    st.markdown(
+        "**Single Ligand Docking**:\n"
+        "- Upload one receptor and one ligand\n"
+        "- Configure grid box and parameters\n"
+        "- Click **Run Docking**\n"
+        "- Results will show binding affinity and download link for poses\n\n"
+        "**Batch Docking**:\n"
+        "- Upload one receptor and multiple ligands\n"
+        "- All ligands will be docked sequentially\n"
+        "- Results table shows binding affinities for all ligands\n"
+        "- Download individual poses or export CSV summary\n\n"
+        "**Understanding Results**:\n"
+        "- **Binding Affinity**: Predicted binding energy in kcal/mol (more negative = stronger binding)\n"
+        "- **Poses**: Generated binding conformations\n"
+        "- **Output Files**: PDBQT files containing docked poses\n"
+        "- **Log Files**: Detailed docking logs with scoring information"
+    )
+
+    st.subheader("6. Output Files")
+    st.markdown(
+        "**Per-Ligand Outputs**:\n"
+        "- PDBQT files with docked poses (one file per ligand)\n"
+        "- Log files with detailed scoring information\n"
+        "- Download buttons for individual files\n\n"
+        "**Summary Files**:\n"
+        "- CSV file with binding affinities for all ligands\n"
+        "- ZIP archive containing all output files\n"
+        "- Useful for batch analysis and comparison"
+    )
+
+    st.subheader("Tips & Best Practices")
+    st.markdown(
+        "**For Zinc Metal Protein Docking**:\n"
+        "- Use the provided zinc metal protein receptors for consistency\n"
+        "- Grid center should be near the zinc binding site\n"
+        "- Typical grid size: 20-25 Angstrom\n\n"
+        "**For General Metalloprotein Docking**:\n"
+        "- Ensure receptor includes metal ions (Zn, Mg, Fe, etc.)\n"
+        "- Grid center should encompass the metal binding site\n"
+        "- Use exhaustiveness 8-16 for initial screening, 32+ for final refinement\n\n"
+        "**Performance Optimization**:\n"
+        "- Use `none` CNN mode for fastest results\n"
+        "- Use `rescore` for better accuracy without much slowdown\n"
+        "- Use `refinement` or `all` for highest accuracy (slower)\n"
+        "- Reduce number of modes if you only need the best pose\n\n"
+        "**Troubleshooting**:\n"
+        "- If docking fails, check that receptor and ligand files are valid\n"
+        "- Ensure grid box encompasses the binding site\n"
+        "- Verify GNINA/SMINA executable is accessible\n"
+        "- Check backend API URL if using cloud deployment"
+    )
+
+    st.subheader("Comparison with Other Docking Methods")
+    st.markdown(
+        "**GNINA vs AutoDock Vina**:\n"
+        "- GNINA is based on Vina but adds CNN scoring\n"
+        "- Similar grid box and exhaustiveness parameters\n"
+        "- GNINA can use CNN to improve pose ranking\n\n"
+        "**GNINA vs AutoDock4**:\n"
+        "- GNINA uses empirical scoring (faster)\n"
+        "- AutoDock4 uses force field scoring (more detailed)\n"
+        "- GNINA supports CNN refinement for pose optimization\n"
+        "- Both support metalloprotein docking"
+    )
+
+    st.info(
+        "**Quick Start**: Upload a CA receptor and ligand, set grid box center to the zinc site, "
+        "use default parameters, and click Run Docking. Check the GNINA ML Docking tab for the interface."
+    )
+
+def render_documentation_page():
+    st.header("MetalBind - Documentation")
+    st.write(
+        "Welcome to the documentation tab! Below is a detailed, step-by-step guide to the "
+        "MetalBind workflow so you know what each section does and how to use it effectively."
+    )
+
+    st.subheader("1. Prepare Your Workspace")
+    st.markdown(
+        "**1. Choose a working directory.**\\n"
+        "MetalBind creates `prepared_ligands/`, `ad4_maps/`, and `outputs/` inside the folder you set. "
+        "If you run on Streamlit Cloud, the directory defaults to `/mount/src/metallodock/`."
+    )
+    st.markdown(
+        "**2. Review the navigation tabs.**\\n"
+        "- *Demo*: AD4 workflow with zinc metal protein presets.\\n"
+        "- *Standard AutoDock*: Vina box docking.\\n"
+        "- *Metalloprotein Docking*: Manual AD4 configuration."
+    )
+
+    st.subheader("2. Provide Receptor & Ligands")
+    st.markdown(
+        "**1. Upload a receptor (PDBQT).**\\n"
+        "Use the uploader or a path. MetalBind normalizes oxygen labels (O to OA) and keeps coordinates intact."
+    )
+    st.markdown(
+        "**2. Prepare ligands.**\\n"
+        "- Supply a source folder and click *Prepare ligands* to convert to PDBQT.\\n"
+        "- Or switch to *Upload now* to drop ready-made PDBQT files. Prepared ligands live under `prepared_ligands/ligands_no_hydrogens`."
+    )
+
+    st.subheader("3. Configure Grid & Backend")
+    st.markdown(
+        "**1. Select the docking backend.**\\n"
+        "- *Vina (box)*: exhaustiveness-based sampling inside the defined box.\\n"
+        "- *AD4 (maps)*: requires AutoGrid maps and supports component energy breakdown."
+    )
+    st.markdown(
+        "**2. Set grid box parameters.**\\n"
+        "Enter center (x, y, z), size (Angstrom), and grid spacing. In the Demo tab these are locked to the preset you choose." 
+    )
+    st.markdown(
+        "**3. Force extra atom types (optional).**\\n"
+        "Add comma-separated atom symbols (e.g., `S,NA`) if your ligands contain uncommon types that need maps."
+    )
+
+    st.subheader("4. Generate AD4 Maps (when using AD4)")
+    st.markdown(
+        "MetalBind wraps AutoGrid4 to create or update map files. The workflow validates inputs before launching the executable:\\n"
+        "1. Confirms `autogrid4` exists and has execute permissions.\\n"
+        "2. Merges `AD4_parameters.dat` with optional `AD4Zn.dat`.\\n"
+        "3. Runs `zinc_pseudo.py` (if present) to insert tetrahedral Zn pseudoatoms.\\n"
+        "4. Normalizes receptor oxygen labels to OA.\\n"
+        "5. Detects receptor & ligand atom types and unions them with forced types.\\n"
+        "6. Builds the grid parameter file (GPF) and executes AutoGrid4."
+    )
+    st.warning(
+        "Spacing must be greater than 0 Angstrom. The Demo tab locks spacing at 0.375 Angstrom to mimic published CA binding boxes."
+    )
+
+    st.subheader("5. Run Docking")
+    st.markdown(
+        "**1. Click *Run Docking*.**\\n"
+        "MetalBind queues each ligand, calls the appropriate executable (Vina or AD4), captures stdout/stderr, and displays live status." 
+    )
+    st.markdown(
+        "**2. Understand the results table.**\\n"
+        "For every ligand you'll see binding affinity, pose counts, output/log paths, and status. AD4 runs also surface intermolecular, "
+        "internal, torsional, and estimated free-energy components." 
+    )
+    st.subheader("5a. Docking parameters reference")
     st.markdown(
         "The following parameters control how docking is run and what happens when a run fails or times out."
     )
     st.markdown(
         "**Base exhaustiveness**  \n"
-        "Controls how thoroughly the search algorithm explores the binding site. Higher values (e.g. 32–64) give more sampling and often better poses but take longer. Lower values (e.g. 8–16) are faster and suitable for screening. Default in Demo is 64."
+        "Controls how thoroughly the search algorithm explores the binding site. Higher values (e.g. 32-64) give more sampling and often better poses but take longer. Lower values (e.g. 8-16) are faster and suitable for screening. Default in Demo is 64."
     )
     st.markdown(
         "**Base num_modes**  \n"
@@ -244,11 +386,11 @@ def render_gnina_documentation_page():
     )
     st.markdown(
         "**Exhaustiveness multiplier on retry**  \n"
-        "On each retry after a failure or timeout, the exhaustiveness used for that ligand is multiplied by this value (and rounded up). Example: base exhaustiveness 64, multiplier 1.5 → first retry uses 96, second retry 144, etc. Values ≥ 1.0 (e.g. 1.25–1.5) give progressively more sampling on retries."
+        "On each retry after a failure or timeout, the exhaustiveness used for that ligand is multiplied by this value (and rounded up). Example: base exhaustiveness 64, multiplier 1.5 -> first retry uses 96, second retry 144, etc. Values >= 1.0 (e.g. 1.25-1.5) give progressively more sampling on retries."
     )
     st.markdown(
         "**num_modes multiplier on retry**  \n"
-        "On each retry, the number of modes is multiplied by this value (and rounded up). Example: base num_modes 10, multiplier 1.25 → first retry uses 13 modes, etc. Together with the exhaustiveness multiplier, this makes retries more thorough."
+        "On each retry, the number of modes is multiplied by this value (and rounded up). Example: base num_modes 10, multiplier 1.25 -> first retry uses 13 modes, etc. Together with the exhaustiveness multiplier, this makes retries more thorough."
     )
     st.markdown(
         "**Skip ligands with existing outputs**  \n"
@@ -261,150 +403,7 @@ def render_gnina_documentation_page():
     st.caption(
         "Retries apply only when a run fails or hits the per-ligand timeout. The same random seed is not reused across retries; each attempt uses a new random seed."
     )
-
-    st.subheader("⑤ Running Docking")
-    st.markdown(
-        "**Single Ligand Docking**:\n"
-        "• Upload one receptor and one ligand\n"
-        "• Configure grid box and parameters\n"
-        "• Click **Run Docking**\n"
-        "• Results will show binding affinity and download link for poses\n\n"
-        "**Batch Docking**:\n"
-        "• Upload one receptor and multiple ligands\n"
-        "• All ligands will be docked sequentially\n"
-        "• Results table shows binding affinities for all ligands\n"
-        "• Download individual poses or export CSV summary\n\n"
-        "**Understanding Results**:\n"
-        "• **Binding Affinity**: Predicted binding energy in kcal/mol (more negative = stronger binding)\n"
-        "• **Poses**: Generated binding conformations\n"
-        "• **Output Files**: PDBQT files containing docked poses\n"
-        "• **Log Files**: Detailed docking logs with scoring information"
-    )
-
-    st.subheader("⑥ Output Files")
-    st.markdown(
-        "**Per-Ligand Outputs**:\n"
-        "• PDBQT files with docked poses (one file per ligand)\n"
-        "• Log files with detailed scoring information\n"
-        "• Download buttons for individual files\n\n"
-        "**Summary Files**:\n"
-        "• CSV file with binding affinities for all ligands\n"
-        "• ZIP archive containing all output files\n"
-        "• Useful for batch analysis and comparison"
-    )
-
-    st.subheader("Tips & Best Practices")
-    st.markdown(
-        "**For Zinc Metal Protein Docking**:\n"
-        "• Use the provided zinc metal protein receptors for consistency\n"
-        "• Grid center should be near the zinc binding site\n"
-        "• Typical grid size: 20-25 Å\n\n"
-        "**For General Metalloprotein Docking**:\n"
-        "• Ensure receptor includes metal ions (Zn, Mg, Fe, etc.)\n"
-        "• Grid center should encompass the metal binding site\n"
-        "• Use exhaustiveness 8-16 for initial screening, 32+ for final refinement\n\n"
-        "**Performance Optimization**:\n"
-        "• Use `none` CNN mode for fastest results\n"
-        "• Use `rescore` for better accuracy without much slowdown\n"
-        "• Use `refinement` or `all` for highest accuracy (slower)\n"
-        "• Reduce number of modes if you only need the best pose\n\n"
-        "**Troubleshooting**:\n"
-        "• If docking fails, check that receptor and ligand files are valid\n"
-        "• Ensure grid box encompasses the binding site\n"
-        "• Verify GNINA/SMINA executable is accessible\n"
-        "• Check backend API URL if using cloud deployment"
-    )
-
-    st.subheader("Comparison with Other Docking Methods")
-    st.markdown(
-        "**GNINA vs AutoDock Vina**:\n"
-        "• GNINA is based on Vina but adds CNN scoring\n"
-        "• Similar grid box and exhaustiveness parameters\n"
-        "• GNINA can use CNN to improve pose ranking\n\n"
-        "**GNINA vs AutoDock4**:\n"
-        "• GNINA uses empirical scoring (faster)\n"
-        "• AutoDock4 uses force field scoring (more detailed)\n"
-        "• GNINA supports CNN refinement for pose optimization\n"
-        "• Both support metalloprotein docking"
-    )
-
-    st.info(
-        "💡 **Quick Start**: Upload a CA receptor and ligand, set grid box center to the zinc site, "
-        "use default parameters, and click Run Docking. Check the GNINA ML Docking tab for the interface."
-    )
-
-def render_documentation_page():
-    st.header("MBind — Documentation")
-    st.write(
-        "Welcome to the documentation tab! Below is a detailed, step-by-step guide to the "
-        "MBind workflow so you know what each section does and how to use it effectively."
-    )
-
-    st.subheader("① Prepare Your Workspace")
-    st.markdown(
-        "**1. Choose a working directory.**\\n"
-        "MBind creates `prepared_ligands/`, `ad4_maps/`, and `outputs/` inside the folder you set. "
-        "If you run on Streamlit Cloud, the directory defaults to `/mount/src/metallodock/`."
-    )
-    st.markdown(
-        "**2. Review the navigation tabs.**\\n"
-        "- *Demo*: AD4 workflow with zinc metal protein presets.\\n"
-        "- *Standard AutoDock*: Vina box docking.\\n"
-        "- *Metalloprotein Docking*: Manual AD4 configuration."
-    )
-
-    st.subheader("② Provide Receptor & Ligands")
-    st.markdown(
-        "**1. Upload a receptor (PDBQT).**\\n"
-        "Use the uploader or a path. MBind normalizes oxygen labels (O → OA) and keeps coordinates intact."
-    )
-    st.markdown(
-        "**2. Prepare ligands.**\\n"
-        "- Supply a source folder and click *Prepare ligands* to convert to PDBQT.\\n"
-        "- Or switch to *Upload now* to drop ready-made PDBQT files. Prepared ligands live under `prepared_ligands/ligands_no_hydrogens`."
-    )
-
-    st.subheader("③ Configure Grid & Backend")
-    st.markdown(
-        "**1. Select the docking backend.**\\n"
-        "- *Vina (box)*: exhaustiveness-based sampling inside the defined box.\\n"
-        "- *AD4 (maps)*: requires AutoGrid maps and supports component energy breakdown."
-    )
-    st.markdown(
-        "**2. Set grid box parameters.**\\n"
-        "Enter center (x, y, z), size (Å), and grid spacing. In the Demo tab these are locked to the preset you choose." 
-    )
-    st.markdown(
-        "**3. Force extra atom types (optional).**\\n"
-        "Add comma-separated atom symbols (e.g., `S,NA`) if your ligands contain uncommon types that need maps."
-    )
-
-    st.subheader("④ Generate AD4 Maps (when using AD4)")
-    st.markdown(
-        "MBind wraps AutoGrid4 to create or update map files. The workflow validates inputs before launching the executable:\\n"
-        "1. Confirms `autogrid4` exists and has execute permissions.\\n"
-        "2. Merges `AD4_parameters.dat` with optional `AD4Zn.dat`.\\n"
-        "3. Runs `zinc_pseudo.py` (if present) to insert tetrahedral Zn pseudoatoms.\\n"
-        "4. Normalizes receptor oxygen labels to OA.\\n"
-        "5. Detects receptor & ligand atom types and unions them with forced types.\\n"
-        "6. Builds the grid parameter file (GPF) and executes AutoGrid4."
-    )
-    st.warning(
-        "Spacing must be greater than 0 Å. The Demo tab locks spacing at 0.375 Å to mimic published CA binding boxes."
-    )
-
-    st.subheader("⑤ Run Docking")
-    st.markdown(
-        "**1. Click *Run Docking*.**\\n"
-        "MBind queues each ligand, calls the appropriate executable (Vina or AD4), captures stdout/stderr, and displays live status." 
-    )
-    st.markdown(
-        "**2. Understand the results table.**\\n"
-        "For every ligand you'll see binding affinity, pose counts, output/log paths, and status. AD4 runs also surface intermolecular, "
-        "internal, torsional, and estimated free-energy components." 
-    )
-
-    st.subheader("⑥ Review & Export Outputs")
+    st.subheader("6. Review & Export Outputs")
     st.markdown(
         "After docking completes you can:"
         "- Download individual ligand PDBQT and log files."
@@ -419,11 +418,11 @@ def render_documentation_page():
     st.markdown(
         "The Demo tab is pre-populated for zinc metal protein receptors. Download the bundled folders (`Zinc Metal Protein Receptors` and "
         "`8 Endogenous Ligands`) from the repository so the tab can locate receptors and sample ligands. Switching between the 8 zinc metal proteins "
-        "*II* locks grid centers, box sizes, spacing (0.375 Å), and docking parameters accordingly."
+        "*II* locks grid centers, box sizes, spacing (0.375 Angstrom), and docking parameters accordingly."
     )
 
     st.info(
-        "Tip: Use the *Tools → Test executables* button to confirm Vina, AutoGrid4, and AutoDock4 paths before starting long jobs."
+        "Tip: Use the *Tools - Test executables* button to confirm Vina, AutoGrid4, and AutoDock4 paths before starting long jobs."
     )
 
 # ==============================
@@ -524,28 +523,6 @@ def zip_outputs(folder: Path) -> bytes:
 # Atom-type utilities (diagnostics + normalization)
 # ==============================
 
-def canon_ad4_type(t: str) -> str:
-    """Normalize AutoDock4 atom type to canonical form.
-    
-    AutoDock4 convention for halogens is Cl, Br, Si (Title-case), 
-    while special AD4 types like NA, OA, SA stay uppercase.
-    """
-    t = (t or "").strip()
-    if not t:
-        return t
-    u = t.upper()
-    # AD4 special atom types that are meant to be uppercase
-    specials = {"NA", "OA", "SA", "HD", "HS"}
-    if u in specials:
-        return u
-    # Typical element-like two-letter types -> Title-case (Cl, Br, Si, Zn, etc.)
-    if t.isalpha() and len(t) == 2:
-        return t[0].upper() + t[1].lower()
-    # Default: keep 1-letter as uppercase, otherwise keep as-is
-    if len(t) == 1 and t.isalpha():
-        return t.upper()
-    return t
-
 def read_types_from_pdbqt(pdbqt_path: Path) -> List[str]:
     """Collect unique AD4 atom types (last token) from ATOM/HETATM lines."""
     seen, types = set(), []
@@ -555,7 +532,7 @@ def read_types_from_pdbqt(pdbqt_path: Path) -> List[str]:
                 if ln.startswith(("ATOM", "HETATM")):
                     toks = ln.split()
                     if toks:
-                        t = canon_ad4_type(toks[-1])
+                        t = toks[-1]
                         if t not in seen:
                             seen.add(t); types.append(t)
     except Exception:
@@ -594,7 +571,7 @@ def normalize_receptor_oxygen_to_OA(src: Path, dst: Path) -> None:
 # ==============================
 
 def prepare_ligands_from_folder(source_dir: Path, prepared_root: Path) -> List[Path]:
-    """Copies *.pdbqt from source_dir → prepared_root/prepared_ligands/ligands_no_hydrogens as *_prepared.pdbqt."""
+    """Copies *.pdbqt from source_dir to prepared_root/prepared_ligands/ligands_no_hydrogens as *_prepared.pdbqt."""
     if not source_dir.exists():
         raise FileNotFoundError(f"Ligand directory not found: {source_dir}")
     ligs = sorted(source_dir.glob("*.pdbqt"))
@@ -760,7 +737,7 @@ def list_maps_present(maps_prefix: Path) -> Set[str]:
         # expecting base.<TYPE>.map
         t = p.suffixes[-2].lstrip(".") if len(p.suffixes) >= 2 else None
         if t:
-            present.add(canon_ad4_type(t))
+            present.add(t)
     return present
 
 # ==============================
@@ -1714,8 +1691,7 @@ def run_endogenous_preset_ad4(preset_key: str, headless: bool = False) -> List[d
             pass
 
     # Filter out invalid AD4 receptor types (ions that AutoGrid4 doesn't support)
-    # Normalize to canonical types for consistent comparison
-    invalid_types = {canon_ad4_type(t) for t in {"K", "Na", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI"}}
+    invalid_types = {"K", "Na", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI"}
     
     # Create a filtered copy of receptor for map building (remove atoms with invalid types)
     rec_filtered = maps_dir / (rec_tz.stem + "_filtered.pdbqt")
@@ -1725,7 +1701,7 @@ def run_endogenous_preset_ad4(preset_key: str, headless: bool = False) -> List[d
                 for line in f_in:
                     if line.startswith(("ATOM", "HETATM")):
                         toks = line.split()
-                        if toks and canon_ad4_type(toks[-1]) in invalid_types:
+                        if toks and toks[-1] in invalid_types:
                             continue  # Skip atoms with invalid types
                     f_out.write(line)
         rec_tz = rec_filtered
@@ -1813,7 +1789,7 @@ def run_endogenous_preset_ad4(preset_key: str, headless: bool = False) -> List[d
             if prog is None:
                 pass
             else:
-                prog.progress(i / n, text=f"{i}/{n} {name} — {stat}")
+                prog.progress(i / n, text=f"{i}/{n} {name} - {stat}")
                 console.write(f"{i}/{n}  {name}: {stat}")
 
     rows = run_vina_batch(
@@ -1842,12 +1818,12 @@ def run_endogenous_preset_ad4(preset_key: str, headless: bool = False) -> List[d
 # ==============================
 
 def _run_cli():
-    parser = argparse.ArgumentParser(description="MBind CLI (uses GUI code paths)")
+    parser = argparse.ArgumentParser(description="MetalBind CLI (uses GUI code paths)")
     parser.add_argument("--cli", action="store_true", help="Run in CLI mode and skip Streamlit UI")
     parser.add_argument("--preset", type=str, default=None,
                         help="One of: CA, SOD1, HDAC1, HDAC2, HDAC3, HDAC4, HDAC6, or HDAC_ALL")
     parser.add_argument("--work-dir", type=str, default=None, help="Working directory for outputs and maps")
-    parser.add_argument("--spacing", type=float, default=0.375, help="AD4 grid spacing (Å)")
+    parser.add_argument("--spacing", type=float, default=0.375, help="AD4 grid spacing (Angstrom)")
     parser.add_argument("--exhaustiveness", type=int, default=64, help="Base exhaustiveness")
     parser.add_argument("--num-modes", type=int, default=10, help="Base num_modes")
     parser.add_argument("--timeout", type=int, default=300, help="Per-ligand soft timeout (s)")
@@ -1973,14 +1949,14 @@ if _files_gui_setup.exists():
 # ==============================
 
 st.set_page_config(
-    page_title="MBind",
+    page_title="MetalBind",
     layout="wide",
 )
 
 # Inject custom CSS to match blue theme
 THEME_CSS = f"""
 <style>
-/* App background: light blue → dark blue gradient */
+/* App background: light blue to dark blue gradient */
 .stApp {{
     background: linear-gradient(135deg, {LIGHT_POWDER_BLUE} 0%, {SOFT_SKY_BLUE} 35%, {LIGHT_AZURE} 70%, {MIDNIGHT_AZURE} 100%);
 }}
@@ -1988,8 +1964,7 @@ THEME_CSS = f"""
 /* Main content container: white card on top of gradient */
 .block-container {{
     background-color: rgba(255, 255, 255, 0.96);
-    padding: 2rem 3rem 4rem 3rem;
-    margin: 2rem;
+    padding: 2rem 2rem 4rem 2rem;
     border-radius: 18px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }}
@@ -2248,36 +2223,6 @@ div[data-testid="stFileUploader"] button *,
 div[data-testid="stFileUploader"] button span {{
     color: #000000 !important;
 }}
-
-/* Demo preset buttons - consistent sizing and spacing */
-/* Target all buttons to ensure consistent styling, then override for specific cases */
-.stButton > button {{
-    white-space: normal !important;
-    word-wrap: break-word !important;
-    line-height: 1.3 !important;
-}}
-
-/* Ensure buttons in columns have consistent spacing */
-div[data-testid="column"] {{
-    padding: 0.5rem !important;
-}}
-
-/* Make sure buttons use full width when use_container_width is True */
-div[data-testid="column"] .stButton {{
-    width: 100% !important;
-}}
-
-div[data-testid="column"] .stButton > button {{
-    width: 100% !important;
-    min-height: 60px !important;
-    padding: 0.75rem 1rem !important;
-    font-size: 0.95rem !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    border-radius: 8px !important;
-}}
 </style>
 """
 st.markdown(THEME_CSS, unsafe_allow_html=True)
@@ -2285,23 +2230,23 @@ st.markdown(THEME_CSS, unsafe_allow_html=True)
 if "nav_open" not in st.session_state:
     st.session_state.nav_open = True
 if "current_page" not in st.session_state:
-    st.session_state.current_page = "MBind Demo"
+    st.session_state.current_page = "MetalBind Demo"
 
 nav_pages = [
     "Home",
     "Documentation",
     "GNINA Documentation",
-    "MBind Demo",
+    "MetalBind Demo",
     "Standard AutoDock",
     "Metalloprotein Docking",
     "GNINA ML Docking",
 ]
 
 if st.session_state.current_page not in nav_pages:
-    st.session_state.current_page = "MBind Demo"
+    st.session_state.current_page = "MetalBind Demo"
 
 with st.sidebar:
-    toggle_label = "«" if st.session_state.nav_open else "»"
+    toggle_label = "<" if st.session_state.nav_open else ">"
     if st.button(toggle_label):
         st.session_state.nav_open = not st.session_state.nav_open
         st.rerun()
@@ -2332,13 +2277,13 @@ if page == "GNINA Documentation":
     st.stop()
 
 page_mode = {
-    "MBind Demo": "ad4",
+    "MetalBind Demo": "ad4",
     "Standard AutoDock": "vina",
     "Metalloprotein Docking": "ad4",
     "GNINA ML Docking": "gnina",
 }.get(page, "generic")
 
-state_prefix = "demo" if page == "MBind Demo" else page_mode
+state_prefix = "demo" if page == "MetalBind Demo" else page_mode
 
 # Session state initialisation for docking workflow
 if "docking_task" not in st.session_state:
@@ -2362,10 +2307,10 @@ st.title(page)
 if page_mode == "gnina":
     st.info(
         "**📁 Using Provided Files or Your Own:**\n\n"
-        "• **Provided Zinc Metal Protein Receptors**: You can use the pre-configured zinc metal protein receptors from the "
+        "- **Provided Zinc Metal Protein Receptors**: You can use the pre-configured zinc metal protein receptors from the "
         "`(DEMO) Zinc Metal Protein Receptors` folder (hACE.pdbqt, HDAC2.pdbqt, HDAC8_with_Hydroxamic_Acid.pdbqt, HDAC8_with_SAHA.pdbqt, HDAC10.pdbqt, Human_Neutral_Endopeptidase.pdbqt, Leukotriene.pdbqt, ADAMTS-5.pdbqt).\n\n"
-        "• **Provided Ligands**: You can use the sample ligands from the `(DEMO) Ligands` folder (8 endogenous ligands).\n\n"
-        "• **Your Own Files**: You can also upload your own receptor (PDB/PDBQT) and ligand files (MOL2/SDF/PDBQT/PDB).\n\n"
+        "- **Provided Ligands**: You can use the sample ligands from the `(DEMO) Ligands` folder (8 endogenous ligands).\n\n"
+        "- **Your Own Files**: You can also upload your own receptor (PDB/PDBQT) and ligand files (MOL2/SDF/PDBQT/PDB).\n\n"
         "Simply upload the files you want to use in the sections below, or navigate to the **GNINA Documentation** tab "
         "for detailed instructions."
     )
@@ -2386,27 +2331,12 @@ _demo_default_size: Optional[Tuple[float, float, float]] = None
 _demo_default_spacing: Optional[float] = None
 demo_selected_label: Optional[str] = None
 
-if page == "MBind Demo":
+if page == "MetalBind Demo":
     st.subheader("Choose Demo Receptor Preset")
-    # Organize buttons into 2 rows of 4 buttons each
-    preset_items = list(DEMO_PRESETS.items())
-    buttons_per_row = 4
-    
-    # First row: 4 buttons
-    row1_cols = st.columns(buttons_per_row)
-    for idx in range(min(buttons_per_row, len(preset_items))):
-        label, settings = preset_items[idx]
-        if row1_cols[idx].button(label, key=f"demo_preset_{label}", use_container_width=True):
+    preset_cols = st.columns(len(DEMO_PRESETS))
+    for idx, (label, settings) in enumerate(DEMO_PRESETS.items()):
+        if preset_cols[idx].button(label, key=f"demo_preset_{label}"):
             st.session_state["demo_selected_preset"] = label
-    
-    # Second row: remaining 4 buttons
-    if len(preset_items) > buttons_per_row:
-        row2_cols = st.columns(buttons_per_row)
-        for idx in range(buttons_per_row, len(preset_items)):
-            label, settings = preset_items[idx]
-            col_idx = idx - buttons_per_row
-            if row2_cols[col_idx].button(label, key=f"demo_preset_{label}", use_container_width=True):
-                st.session_state["demo_selected_preset"] = label
 
     demo_selected_label = st.session_state.get("demo_selected_preset", next(iter(DEMO_PRESETS)))
     demo_preset_info = DEMO_PRESETS[demo_selected_label]
@@ -2491,7 +2421,7 @@ with upload_col2:
     if ligand_paths:
         preview = ", ".join(p.name for p in ligand_paths[:5])
         if len(ligand_paths) > 5:
-            preview += ", …"
+            preview += ", ..."
         st.caption(f"{len(ligand_paths)} ligand(s) ready: {preview}")
     else:
         st.info("Upload one or more ligand PDBQT files to continue.")
@@ -2517,7 +2447,7 @@ elif page_mode == "vina":
         "spacing": 0.375,
     }
     maps_prefix_default = str((work_dir / "ad4_maps" / "receptor_maps").resolve())
-elif page == "MBind Demo":
+elif page == "MetalBind Demo":
     allowed_backends = ["AD4 (maps)"]
     default_backend_label = "AD4 (maps)"
     grid_defaults = {
@@ -2626,7 +2556,7 @@ with st.expander("Configuration", expanded=True):
         default_size = grid_defaults["size"]
         default_spacing = grid_defaults["spacing"]
 
-        if page == "MBind Demo":
+        if page == "MetalBind Demo":
             for idx, axis in enumerate(["x", "y", "z"]):
                 center_key = center_keys[axis]
                 size_key = size_keys[axis]
@@ -2647,7 +2577,7 @@ with st.expander("Configuration", expanded=True):
             if f"{state_prefix}_maps_prefix" not in st.session_state:
                 st.session_state[f"{state_prefix}_maps_prefix"] = maps_prefix_default
 
-        grid_disabled = page == "MBind Demo"
+        grid_disabled = page == "MetalBind Demo"
 
         grid_c1, grid_c2, grid_c3 = st.columns(3)
         with grid_c1:
@@ -2678,7 +2608,7 @@ with st.expander("Configuration", expanded=True):
         sz1, sz2, sz3 = st.columns(3)
         with sz1:
             size_x = st.number_input(
-                "size_x (Å)",
+                "size_x (Angstrom)",
                 value=st.session_state[size_keys["x"]],
                 min_value=0.0,
                 step=0.25,
@@ -2687,7 +2617,7 @@ with st.expander("Configuration", expanded=True):
             )
         with sz2:
             size_y = st.number_input(
-                "size_y (Å)",
+                "size_y (Angstrom)",
                 value=st.session_state[size_keys["y"]],
                 min_value=0.0,
                 step=0.25,
@@ -2696,7 +2626,7 @@ with st.expander("Configuration", expanded=True):
             )
         with sz3:
             size_z = st.number_input(
-                "size_z (Å)",
+                "size_z (Angstrom)",
                 value=st.session_state[size_keys["z"]],
                 min_value=0.0,
                 step=0.25,
@@ -2705,7 +2635,7 @@ with st.expander("Configuration", expanded=True):
             )
 
         spacing = st.number_input(
-            "AD4 grid spacing (Å)",
+            "AD4 grid spacing (Angstrom)",
             value=st.session_state[spacing_key],
             min_value=0.0,
             max_value=1.0,
@@ -2747,7 +2677,7 @@ is_windows = platform.system() == "Windows"
 
 st.subheader("Docking Parameters")
 p1, p2, p3, p4 = st.columns(4)
-params_disabled = page == "MBind Demo"
+params_disabled = page == "MetalBind Demo"
 with p1:
     if page_mode == "gnina":
         scoring = "GNINA (ML)"
@@ -2853,7 +2783,7 @@ if page_mode == "gnina":
 # Detect operating system
 exe_ext = ".exe" if is_windows else ""
 
-# Always enable receptor oxygen normalization (O→OA)
+# Always enable receptor oxygen normalization (O to OA)
 normalize_OA = True
 
 # Auto-detect paths (fallback to defaults if Files_for_GUI doesn't exist)
@@ -2907,9 +2837,9 @@ if build_maps_btn:
 
             force_types = set()
             if force_extra_types:
-                force_types = {canon_ad4_type(tok) for tok in force_extra_types.split(",") if tok.strip()}
+                force_types = {tok.strip().upper() for tok in force_extra_types.split(",") if tok.strip()}
 
-            with st.spinner("Building AutoGrid4 maps…"):
+            with st.spinner("Building AutoGrid4 maps..."):
                 if receptor_path is None or not receptor_path.exists():
                     raise FileNotFoundError("Upload a receptor PDBQT before building maps.")
                 if autogrid_exe is None or not autogrid_exe.exists():
@@ -2919,10 +2849,10 @@ if build_maps_btn:
 
                 spacing_val = float(spacing)
                 if spacing_val <= 0.0:
-                    raise ValueError("AD4 grid spacing must be greater than 0.0 Å before building maps.")
+                    raise ValueError("AD4 grid spacing must be greater than 0.0 Angstrom before building maps.")
                 size_vals = (float(size_x), float(size_y), float(size_z))
                 if any(val <= 0.0 for val in size_vals):
-                    raise ValueError("Grid box dimensions must all be greater than 0.0 Å before building maps.")
+                    raise ValueError("Grid box dimensions must all be greater than 0.0 Angstrom before building maps.")
 
                 maps_prefix_clean = maps_prefix_path.with_suffix("") if maps_prefix_path.suffix else maps_prefix_path
                 maps_dir = maps_prefix_clean.parent
@@ -2944,14 +2874,14 @@ if build_maps_btn:
                     except Exception:
                         pass
 
-                invalid_types = {canon_ad4_type(t) for t in {"K", "NA", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI"}}
+                invalid_types = {"K", "NA", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI"}
                 rec_filtered = maps_dir / f"{receptor_copy.stem}_filtered.pdbqt"
                 try:
                     with open(receptor_copy, "r", errors="ignore") as fin, open(rec_filtered, "w", encoding="utf-8") as fout:
                         for line in fin:
                             if line.startswith(("ATOM", "HETATM")):
                                 toks = line.split()
-                                if toks and canon_ad4_type(toks[-1]) in invalid_types:
+                                if toks and toks[-1] in invalid_types:
                                     continue
                             fout.write(line)
                     if rec_filtered.stat().st_size == 0:
@@ -2970,7 +2900,7 @@ if build_maps_btn:
                 ligand_types = ligand_types_union(ligand_paths) if ligand_paths else set()
                 if force_types:
                     ligand_types.update(force_types)
-                ligand_types = {canon_ad4_type(t) for t in ligand_types if t}
+                ligand_types = {t.strip().upper() for t in ligand_types if t}
                 if not ligand_types:
                     ligand_types = {"C", "F", "O", "OA", "S", "NA"}
                 ligand_types_sorted = sorted(ligand_types)
@@ -3111,17 +3041,8 @@ if run_btn:
 
     maps_prefix = None
     if backend == "AD4 (maps)":
-        maps_prefix_str = (maps_prefix_input or "").strip()
-        if maps_prefix_str:
-            maps_prefix = Path(maps_prefix_str).expanduser()
-            if not maps_prefix.is_absolute():
-                maps_prefix = (work_dir / maps_prefix).resolve()
-            else:
-                maps_prefix = maps_prefix.resolve()
-        if not maps_prefix or not maps_prefix.parts:
-            maps_prefix = (work_dir / "ad4_maps" / "receptor_maps").resolve()
-        required_types_raw = ligand_types_union(ligand_paths) or {"C", "F", "OA", "S", "NA"}
-        required_types = sorted({canon_ad4_type(t) for t in required_types_raw})
+        maps_prefix = Path(maps_prefix_input).expanduser().resolve()
+        required_types = sorted(ligand_types_union(ligand_paths) or {"C", "F", "OA", "S", "NA"})
         have = list_maps_present(maps_prefix)
         base_req = [
             maps_prefix.parent / f"{maps_prefix.name}.maps.fld",
@@ -3139,14 +3060,14 @@ if run_btn:
 
     tm_mode_key = "no_timeout" if timeout_mode.startswith("No timeout") else "soft_timeout"
 
-    prog = st.progress(0, text="Starting docking…")
+    prog = st.progress(0, text="Starting docking...")
     console = st.empty()
 
     def _cb(i, n, name, stat):
-        prog.progress(i / n, text=f"{i}/{n} {name} — {stat}")
+        prog.progress(i / n, text=f"{i}/{n} {name} - {stat}")
         console.write(f"{i}/{n}  {name}: {stat}")
 
-    with st.spinner("Running docking…"):
+    with st.spinner("Running docking..."):
         if page_mode == "gnina":
             # Get backend URL for this run
             backend_url_run = st.session_state.get(f"{state_prefix}_backend_url", "").strip() if f"{state_prefix}_backend_url" in st.session_state else ""
@@ -3286,7 +3207,7 @@ def list_maps_present(maps_prefix: Path) -> Set[str]:
         # expecting base.<TYPE>.map
         t = p.suffixes[-2].lstrip(".") if len(p.suffixes) >= 2 else None
         if t:
-            present.add(canon_ad4_type(t))
+            present.add(t)
     return present
 
 FORCE_DEFAULT_TYPES = {"C", "F", "O", "OA", "S", "NA"}
@@ -3314,10 +3235,10 @@ def build_ad4_maps(
 
     spacing_val = float(spacing)
     if spacing_val <= 0.0:
-        raise ValueError("AD4 grid spacing must be greater than 0.0 Å before building maps.")
+        raise ValueError("AD4 grid spacing must be greater than 0.0 Angstrom before building maps.")
     size_vals = tuple(float(v) for v in size)
     if any(val <= 0.0 for val in size_vals):
-        raise ValueError("Grid box dimensions must all be greater than 0.0 Å before building maps.")
+        raise ValueError("Grid box dimensions must all be greater than 0.0 Angstrom before building maps.")
 
     prefix_clean = maps_prefix.with_suffix("") if maps_prefix.suffix else maps_prefix
     maps_dir = prefix_clean.parent
@@ -3334,14 +3255,14 @@ def build_ad4_maps(
         except Exception:
             pass
 
-    invalid_types = {canon_ad4_type(t) for t in {"K", "Na", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI"}}
+    invalid_types = {"K", "Na", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI"}
     rec_filtered = maps_dir / (receptor_copy.stem + "_filtered.pdbqt")
     try:
         with open(receptor_copy, "r", errors="ignore") as fin, open(rec_filtered, "w", encoding="utf-8") as fout:
             for line in fin:
                 if line.startswith(("ATOM", "HETATM")):
                     toks = line.split()
-                    if toks and canon_ad4_type(toks[-1]) in invalid_types:
+                    if toks and toks[-1] in invalid_types:
                         continue
                 fout.write(line)
         if rec_filtered.stat().st_size == 0:
@@ -3360,7 +3281,7 @@ def build_ad4_maps(
     ligand_types = ligand_types_union(ligands) if ligands else set()
     if force_types:
         ligand_types.update(force_types)
-    ligand_types = {canon_ad4_type(t) for t in ligand_types if t}
+    ligand_types = {t.strip().upper() for t in ligand_types if t}
     if not ligand_types:
         ligand_types = set(FORCE_DEFAULT_TYPES)
     if not ligand_types:
