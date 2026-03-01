@@ -360,13 +360,13 @@ def render_documentation_page():
         "internal, torsional, and estimated free-energy components." 
     )
 
-    st.subheader("⑤a Docking parameters reference")
+    st.subheader("5a. Docking parameters reference")
     st.markdown(
         "The following parameters control how docking is run and what happens when a run fails or times out."
     )
     st.markdown(
         "**Base exhaustiveness**  \n"
-        "Controls how thoroughly the search algorithm explores the binding site. Higher values (e.g. 32–64) give more sampling and often better poses but take longer. Lower values (e.g. 8–16) are faster and suitable for screening. Default in Demo is 64."
+        "Controls how thoroughly the search algorithm explores the binding site. Higher values (e.g. 32-64) give more sampling and often better poses but take longer. Lower values (e.g. 8-16) are faster and suitable for screening. Default in Demo is 64."
     )
     st.markdown(
         "**Base num_modes**  \n"
@@ -387,11 +387,11 @@ def render_documentation_page():
     )
     st.markdown(
         "**Exhaustiveness multiplier on retry**  \n"
-        "On each retry after a failure or timeout, the exhaustiveness used for that ligand is multiplied by this value (and rounded up). Example: base exhaustiveness 64, multiplier 1.5 → first retry uses 96, second retry 144, etc. Values ≥ 1.0 (e.g. 1.25–1.5) give progressively more sampling on retries."
+        "On each retry after a failure or timeout, the exhaustiveness used for that ligand is multiplied by this value (and rounded up). Example: base exhaustiveness 64, multiplier 1.5 -> first retry uses 96, second retry 144, etc. Values >= 1.0 (e.g. 1.25-1.5) give progressively more sampling on retries."
     )
     st.markdown(
         "**num_modes multiplier on retry**  \n"
-        "On each retry, the number of modes is multiplied by this value (and rounded up). Example: base num_modes 10, multiplier 1.25 → first retry uses 13 modes, etc. Together with the exhaustiveness multiplier, this makes retries more thorough."
+        "On each retry, the number of modes is multiplied by this value (and rounded up). Example: base num_modes 10, multiplier 1.25 -> first retry uses 13 modes, etc. Together with the exhaustiveness multiplier, this makes retries more thorough."
     )
     st.markdown(
         "**Skip ligands with existing outputs**  \n"
