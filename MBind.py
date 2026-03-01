@@ -2333,10 +2333,14 @@ demo_selected_label: Optional[str] = None
 
 if page == "MetalBind Demo":
     st.subheader("Choose Demo Receptor Preset")
-    preset_cols = st.columns(len(DEMO_PRESETS))
-    for idx, (label, settings) in enumerate(DEMO_PRESETS.items()):
-        if preset_cols[idx].button(label, key=f"demo_preset_{label}"):
-            st.session_state["demo_selected_preset"] = label
+    presets_list = list(DEMO_PRESETS.items())
+    n_cols = 4
+    for row_start in range(0, len(presets_list), n_cols):
+        row_items = presets_list[row_start : row_start + n_cols]
+        cols = st.columns(n_cols)
+        for col_idx, (label, _) in enumerate(row_items):
+            if cols[col_idx].button(label, key=f"demo_preset_{label}"):
+                st.session_state["demo_selected_preset"] = label
 
     demo_selected_label = st.session_state.get("demo_selected_preset", next(iter(DEMO_PRESETS)))
     demo_preset_info = DEMO_PRESETS[demo_selected_label]
