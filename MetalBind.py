@@ -359,7 +359,6 @@ def render_documentation_page():
         "For every ligand you'll see binding affinity, pose counts, output/log paths, and status. AD4 runs also surface intermolecular, "
         "internal, torsional, and estimated free-energy components." 
     )
-
     st.subheader("5a. Docking parameters reference")
     st.markdown(
         "The following parameters control how docking is run and what happens when a run fails or times out."
@@ -404,7 +403,6 @@ def render_documentation_page():
     st.caption(
         "Retries apply only when a run fails or hits the per-ligand timeout. The same random seed is not reused across retries; each attempt uses a new random seed."
     )
-
     st.subheader("⑥ Review & Export Outputs")
     st.markdown(
         "After docking completes you can:"
