@@ -30,7 +30,7 @@ except ImportError:
     HAS_REQUESTS = False
 
 
-# ---- MBind-ML Theme Palette ----
+# ---- MBind Theme Palette ----
 LIGHT_POWDER_BLUE = "#6B9FC0"     # Darker Light Powder Blue
 SOFT_SKY_BLUE = "#4A7FA8"         # Darker Soft Sky Blue
 LIGHT_AZURE = "#2D6B94"           # Darker Light Azure
@@ -89,9 +89,9 @@ DEMO_PARAM_DEFAULTS = {
 }
 
 def render_home_page():
-    st.header("Welcome to MBind-ML")
+    st.header("Welcome to MBind")
     st.write(
-        "MBind-ML streamlines AutoDock4 map-based docking for metalloprotein projects. "
+        "MBind streamlines AutoDock4 map-based docking for metalloprotein projects. "
         "Use this interface to prepare receptors and ligands, build AD4 maps, and run either "
         "classical Vina or AD4 scoring workflows from a single place."
     )
@@ -104,7 +104,7 @@ def render_home_page():
     )
     st.subheader("Workflow Overview")
     st.markdown(
-        "1. Choose a working directory (MBind-ML will create the required folders there).\n"
+        "1. Choose a working directory (MBind will create the required folders there).\n"
         "2. Load a receptor from file or path; normalization and optional pseudo atom insertion run automatically.\n"
         "3. Prepare ligands from a source folder or upload ready-to-dock PDBQT files.\n"
         "4. Build or update AD4 maps so that every ligand atom type is covered.\n"
@@ -290,16 +290,16 @@ def render_gnina_documentation_page():
     )
 
 def render_documentation_page():
-    st.header("MBind-ML - Documentation")
+    st.header("MBind - Documentation")
     st.write(
         "Welcome to the documentation tab! Below is a detailed, step-by-step guide to the "
-        "MBind-ML workflow so you know what each section does and how to use it effectively."
+        "MBind workflow so you know what each section does and how to use it effectively."
     )
 
     st.subheader("1. Prepare Your Workspace")
     st.markdown(
         "**1. Choose a working directory.**\\n"
-        "MBind-ML creates `prepared_ligands/`, `ad4_maps/`, and `outputs/` inside the folder you set. "
+        "MBind creates `prepared_ligands/`, `ad4_maps/`, and `outputs/` inside the folder you set. "
         "If you run on Streamlit Cloud, the directory defaults to `/mount/src/metallodock/`."
     )
     st.markdown(
@@ -312,7 +312,7 @@ def render_documentation_page():
     st.subheader("2. Provide Receptor & Ligands")
     st.markdown(
         "**1. Upload a receptor (PDBQT).**\\n"
-        "Use the uploader or a path. MBind-ML normalizes oxygen labels (O to OA) and keeps coordinates intact."
+        "Use the uploader or a path. MBind normalizes oxygen labels (O to OA) and keeps coordinates intact."
     )
     st.markdown(
         "**2. Prepare ligands.**\\n"
@@ -337,7 +337,7 @@ def render_documentation_page():
 
     st.subheader("4. Generate AD4 Maps (when using AD4)")
     st.markdown(
-        "MBind-ML wraps AutoGrid4 to create or update map files. The workflow validates inputs before launching the executable:\\n"
+        "MBind wraps AutoGrid4 to create or update map files. The workflow validates inputs before launching the executable:\\n"
         "1. Confirms `autogrid4` exists and has execute permissions.\\n"
         "2. Merges `AD4_parameters.dat` with optional `AD4Zn.dat`.\\n"
         "3. Runs `zinc_pseudo.py` (if present) to insert tetrahedral Zn pseudoatoms.\\n"
@@ -352,7 +352,7 @@ def render_documentation_page():
     st.subheader("5. Run Docking")
     st.markdown(
         "**1. Click *Run Docking*.**\\n"
-        "MBind-ML queues each ligand, calls the appropriate executable (Vina or AD4), captures stdout/stderr, and displays live status." 
+        "MBind queues each ligand, calls the appropriate executable (Vina or AD4), captures stdout/stderr, and displays live status." 
     )
     st.markdown(
         "**2. Understand the results table.**\\n"
@@ -382,7 +382,7 @@ def render_documentation_page():
     )
     st.markdown(
         "**Max retries on failure**  \n"
-        "When a run fails (e.g. timeout, error, or missing output), MBind-ML can retry up to this many times. Each retry uses increased exhaustiveness and num_modes (see multipliers below). 0 = no retries; 1 = one retry after the first failure, etc."
+        "When a run fails (e.g. timeout, error, or missing output), MBind can retry up to this many times. Each retry uses increased exhaustiveness and num_modes (see multipliers below). 0 = no retries; 1 = one retry after the first failure, etc."
     )
     st.markdown(
         "**Exhaustiveness multiplier on retry**  \n"
@@ -1818,7 +1818,7 @@ def run_endogenous_preset_ad4(preset_key: str, headless: bool = False) -> List[d
 # ==============================
 
 def _run_cli():
-    parser = argparse.ArgumentParser(description="MBind-ML CLI (uses GUI code paths)")
+    parser = argparse.ArgumentParser(description="MBind CLI (uses GUI code paths)")
     parser.add_argument("--cli", action="store_true", help="Run in CLI mode and skip Streamlit UI")
     parser.add_argument("--preset", type=str, default=None,
                         help="One of: CA, SOD1, HDAC1, HDAC2, HDAC3, HDAC4, HDAC6, or HDAC_ALL")
@@ -1949,7 +1949,7 @@ if _files_gui_setup.exists():
 # ==============================
 
 st.set_page_config(
-    page_title="MBind-ML",
+    page_title="MBind",
     layout="wide",
 )
 
@@ -2230,20 +2230,20 @@ st.markdown(THEME_CSS, unsafe_allow_html=True)
 if "nav_open" not in st.session_state:
     st.session_state.nav_open = True
 if "current_page" not in st.session_state:
-    st.session_state.current_page = "MBind-ML Demo"
+    st.session_state.current_page = "MBind Demo"
 
 nav_pages = [
     "Home",
     "Documentation",
     "GNINA Documentation",
-    "MBind-ML Demo",
+    "MBind Demo",
     "Standard AutoDock",
     "Metalloprotein Docking",
     "GNINA ML Docking",
 ]
 
 if st.session_state.current_page not in nav_pages:
-    st.session_state.current_page = "MBind-ML Demo"
+    st.session_state.current_page = "MBind Demo"
 
 with st.sidebar:
     toggle_label = "<" if st.session_state.nav_open else ">"
@@ -2277,13 +2277,13 @@ if page == "GNINA Documentation":
     st.stop()
 
 page_mode = {
-    "MBind-ML Demo": "ad4",
+    "MBind Demo": "ad4",
     "Standard AutoDock": "vina",
     "Metalloprotein Docking": "ad4",
     "GNINA ML Docking": "gnina",
 }.get(page, "generic")
 
-state_prefix = "demo" if page == "MBind-ML Demo" else page_mode
+state_prefix = "demo" if page == "MBind Demo" else page_mode
 
 # Session state initialisation for docking workflow
 if "docking_task" not in st.session_state:
@@ -2331,7 +2331,7 @@ _demo_default_size: Optional[Tuple[float, float, float]] = None
 _demo_default_spacing: Optional[float] = None
 demo_selected_label: Optional[str] = None
 
-if page == "MBind-ML Demo":
+if page == "MBind Demo":
     st.subheader("Choose Demo Receptor Preset")
     presets_list = list(DEMO_PRESETS.items())
     n_cols = 4
@@ -2451,7 +2451,7 @@ elif page_mode == "vina":
         "spacing": 0.375,
     }
     maps_prefix_default = str((work_dir / "ad4_maps" / "receptor_maps").resolve())
-elif page == "MBind-ML Demo":
+elif page == "MBind Demo":
     allowed_backends = ["AD4 (maps)"]
     default_backend_label = "AD4 (maps)"
     grid_defaults = {
@@ -2560,7 +2560,7 @@ with st.expander("Configuration", expanded=True):
         default_size = grid_defaults["size"]
         default_spacing = grid_defaults["spacing"]
 
-        if page == "MBind-ML Demo":
+        if page == "MBind Demo":
             for idx, axis in enumerate(["x", "y", "z"]):
                 center_key = center_keys[axis]
                 size_key = size_keys[axis]
@@ -2581,7 +2581,7 @@ with st.expander("Configuration", expanded=True):
             if f"{state_prefix}_maps_prefix" not in st.session_state:
                 st.session_state[f"{state_prefix}_maps_prefix"] = maps_prefix_default
 
-        grid_disabled = page == "MBind-ML Demo"
+        grid_disabled = page == "MBind Demo"
 
         grid_c1, grid_c2, grid_c3 = st.columns(3)
         with grid_c1:
@@ -2681,7 +2681,7 @@ is_windows = platform.system() == "Windows"
 
 st.subheader("Docking Parameters")
 p1, p2, p3, p4 = st.columns(4)
-params_disabled = page == "MBind-ML Demo"
+params_disabled = page == "MBind Demo"
 with p1:
     if page_mode == "gnina":
         scoring = "GNINA (ML)"
