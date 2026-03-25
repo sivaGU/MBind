@@ -1,7 +1,7 @@
 # MBind Setup Instructions
 
 ## Overview
-MBind is a Streamlit-based GUI for AutoDock Vina and AutoDock4 (AD4) metalloprotein docking. The Demo tab is configured for 8 Zinc Metal Proteins.
+MBind is a Streamlit-based GUI for AutoDock Vina and AutoDock4 (AD4) metalloprotein docking. The Demo tab is configured for 8 Zn²⁺ metalloproteins.
 
 ## Quick Start
 
@@ -55,10 +55,10 @@ MBind/
 │   ├── autogrid4                   # AutoGrid4 executable
 │   ├── autodock4                   # AutoDock4 executable
 │   ├── AD4_parameters.dat          # AD4 parameters
-│   ├── AD4Zn.dat                   # AD4 zinc extra (merge for Zn/TZ)
+│   ├── AD4Zn.dat                   # AD4 extra block (merge for Zn²⁺/TZ)
 │   ├── AD4Fe.dat, AD4Cu.dat, AD4Mg.dat  # Extra blocks for Fe/Cu/Mg
 │   ├── ad4_maps/                   # Pre-merged: ZnTZ, FeTF, CuTQ, MgTM
-│   ├── zinc_pseudo.py              # Zn pseudoatom (TZ)
+│   ├── zinc_pseudo.py              # Zn²⁺ pseudoatom (TZ)
 │   ├── iron_pseudo.py, copper_pseudo.py, magnesium_pseudo.py  # TF, TQ, TM
 │   └── Ligands/                    # Sample ligands
 ├── (DEMO) Zinc Metal Protein Receptors/  # Demo receptors (populate with 8 PDBQT files)
@@ -69,7 +69,8 @@ MBind/
 
 - **Demo Tab**: Pre-configured for 8 Zinc Metal Proteins with locked grid box parameters
 - **Standard AutoDock Tab**: Vina-focused workflow with user-defined grid boxes
-- **Metalloprotein Docking Tab**: AD4 workflow with full control over grid/map settings
+- **Zn²⁺ Metalloprotein Docking tab**: AD4 workflow with full control over grid/map settings  
+- **Fe²⁺/Mg²⁺/Cu²⁺ Metalloprotein Docking tab**: AD4 maps for Fe²⁺, Mg²⁺, or Cu²⁺ using bundled pseudo scripts and merged `.dat` files
 
 ## Notes
 
