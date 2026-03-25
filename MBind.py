@@ -306,8 +306,8 @@ def render_documentation_page():
         "**2. Review the navigation tabs.**\\n"
         "- *Demo*: AD4 workflow with zinc metal protein presets.\\n"
         "- *Standard AutoDock*: Vina box docking.\\n"
-        "- *Metalloprotein Docking*: Manual AD4 configuration (zinc-style parameters).\\n"
-        "- *Fe / Cu / Mg Docking*: AD4 maps for iron, copper, or magnesium using bundled pseudo scripts and merged `.dat` files."
+        "- *Zn Metalloprotein Docking*: Manual AD4 configuration (zinc-style parameters).\\n"
+        "- *Additional Metalloprotein Docking*: AD4 maps for iron, copper, or magnesium using bundled pseudo scripts and merged `.dat` files."
     )
 
     st.subheader("2. Provide Receptor & Ligands")
@@ -627,15 +627,15 @@ def run_zinc_pseudo(python_exe: Path, script: Path, receptor_in: Path, receptor_
 # ---- Fe / Cu / Mg metalloprotein tab (bundled Files_for_GUI/ad4_maps + pseudo scripts) ----
 FECUMG_METAL_OPTIONS: List[Tuple[str, Dict[str, str]]] = [
     (
-        "Iron (Fe) — tetrahedral TF pseudo",
+        "Iron (Fe)",
         {"script": "iron_pseudo.py", "merged_dat": "AD4_parameters_plus_FeTF.dat", "pseudo_type": "TF"},
     ),
     (
-        "Copper (Cu) — tetrahedral TQ pseudo",
+        "Copper (Cu)",
         {"script": "copper_pseudo.py", "merged_dat": "AD4_parameters_plus_CuTQ.dat", "pseudo_type": "TQ"},
     ),
     (
-        "Magnesium (Mg) — tetrahedral TM pseudo",
+        "Magnesium (Mg)",
         {"script": "magnesium_pseudo.py", "merged_dat": "AD4_parameters_plus_MgTM.dat", "pseudo_type": "TM"},
     ),
 ]
@@ -2277,8 +2277,8 @@ nav_pages = [
     "GNINA Documentation",
     "MBind Demo",
     "Standard AutoDock",
-    "Metalloprotein Docking",
-    "Fe / Cu / Mg Docking",
+    "Zn Metalloprotein Docking",
+    "Additional Metalloprotein Docking",
     "GNINA ML Docking",
 ]
 
@@ -2319,8 +2319,8 @@ if page == "GNINA Documentation":
 page_mode = {
     "MBind Demo": "ad4",
     "Standard AutoDock": "vina",
-    "Metalloprotein Docking": "ad4",
-    "Fe / Cu / Mg Docking": "ad4",
+    "Zn Metalloprotein Docking": "ad4",
+    "Additional Metalloprotein Docking": "ad4",
     "GNINA ML Docking": "gnina",
 }.get(page, "generic")
 
@@ -2328,7 +2328,7 @@ state_prefix = (
     "demo"
     if page == "MBind Demo"
     else "fecumg"
-    if page == "Fe / Cu / Mg Docking"
+    if page == "Additional Metalloprotein Docking"
     else page_mode
 )
 
@@ -2350,7 +2350,7 @@ if "docking_status_message" not in st.session_state:
 
 st.title(page)
 
-if page == "Fe / Cu / Mg Docking":
+if page == "Additional Metalloprotein Docking":
     st.info(
         "**Fe / Cu / Mg metalloprotein docking** mirrors the zinc workflow: upload a receptor PDBQT with the ion, "
         "choose the metal below, then **Build/Update AD4 Maps** (the app runs the matching tetrahedral pseudo-atom "
@@ -2486,7 +2486,7 @@ with upload_col2:
         st.info("Upload one or more ligand PDBQT files to continue.")
 
 metal_gui_selection: Optional[str] = None
-if page == "Fe / Cu / Mg Docking":
+if page == "Additional Metalloprotein Docking":
     st.subheader("Metal ion and AD4 parameter set")
     metal_gui_selection = st.selectbox(
         "Target metal (pseudo atom + merged .dat)",
@@ -2911,7 +2911,7 @@ if build_maps_btn:
             if force_extra_types:
                 force_types = {tok.strip().upper() for tok in force_extra_types.split(",") if tok.strip()}
 
-            use_fecumg_maps = page == "Fe / Cu / Mg Docking"
+            use_fecumg_maps = page == "Additional Metalloprotein Docking"
 
             with st.spinner("Building AutoGrid4 maps..."):
                 if receptor_path is None or not receptor_path.exists():
