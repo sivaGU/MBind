@@ -50,8 +50,8 @@ if not exist "Files_for_GUI\Ligands" (
     exit /b 1
 )
 
-if not exist "MetalBind.py" (
-    echo Error: MBind main script ^(MetalBind.py^) not found in current directory
+if not exist "MBind.py" (
+    echo Error: MBind main script ^(MBind.py^) not found in current directory
     echo Please ensure you are running this from the project folder
     pause
     exit /b 1
@@ -60,10 +60,10 @@ if not exist "MetalBind.py" (
 echo Starting MBind GUI...
 echo.
 
-REM Run the original GUI
-echo Running MBind: streamlit run MetalBind.py
+REM Run the GUI
+echo Running MBind: streamlit run MBind.py
 echo Opening browser at http://localhost:8501
 echo.
-streamlit run MetalBind.py
+streamlit run MBind.py
 
 pause

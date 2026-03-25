@@ -20,7 +20,7 @@ Hosted app: https://g8sfrb59jfx7ohqfzr5fko.streamlit.app/
 
 ## Quick Start (Cloud)
 1. Open the hosted Streamlit app.
-2. Select the desired navigation tab (Demo, Standard AutoDock, or Metalloprotein Docking).
+2. Select the desired navigation tab (Demo, Standard AutoDock, Metalloprotein Docking, or Fe / Cu / Mg Docking).
 3. Follow the on-screen prompts to upload receptors, ligands, and configure grid parameters.
 4. Use the *Documentation* tab for a detailed walkthrough of each step.
 
@@ -36,7 +36,7 @@ Hosted app: https://g8sfrb59jfx7ohqfzr5fko.streamlit.app/
    ```
 3. **Launch the app**
    ```bash
-   streamlit run MetalBind.py
+   streamlit run MBind.py
    ```
    *Windows:* double-click `run_docking.bat` to launch Streamlit.
 4. Visit `http://localhost:8501` in your browser.
@@ -49,19 +49,20 @@ Hosted app: https://g8sfrb59jfx7ohqfzr5fko.streamlit.app/
   - `autogrid4.exe`
   - `autodock4.exe`
 
-*Linux/Mac:* compile or install equivalent binaries (without `.exe` extensions) and update paths in `MetalBind.py` or drop them inside `Files_for_GUI/`.
+*Linux/Mac:* compile or install equivalent binaries (without `.exe` extensions) and drop them inside `Files_for_GUI/` (same names without `.exe`).
 
 ## Project Structure
 ```
 MetalBind-main/
-├── MetalBind.py          # Main MBind Streamlit application
+├── MBind.py                # Main MBind Streamlit application
 ├── Files_for_GUI/          # Executables, parameters, sample ligands
-│   ├── vina.exe
-│   ├── autogrid4.exe
-│   ├── autodock4.exe
+│   ├── vina.exe / vina
+│   ├── autogrid4.exe / autogrid4
+│   ├── autodock4.exe / autodock4
 │   ├── zinc_pseudo.py
-│   ├── AD4_parameters.dat
-│   ├── AD4Zn.dat
+│   ├── iron_pseudo.py, copper_pseudo.py, magnesium_pseudo.py
+│   ├── AD4_parameters.dat, AD4Zn.dat, AD4Fe.dat, AD4Cu.dat, AD4Mg.dat
+│   ├── ad4_maps/           # Pre-merged AD4 parameter files (ZnTZ, FeTF, CuTQ, MgTM)
 │   └── Ligands/
 ├── run_docking.bat         # Windows launcher
 ├── requirements.txt        # Python dependencies
@@ -69,7 +70,7 @@ MetalBind-main/
 ```
 
 ## Key Features
-- Unified Vina and AD4 workflows with zinc pseudoatom support
+- Unified Vina and AD4 workflows with zinc pseudoatom support and **Fe / Cu / Mg** metalloprotein maps (TF / TQ / TM)
 - Automatic executable discovery and parameter setup
 - Grid box calculators, AD4 map generation, and progress tracking
 - Downloads for per-ligand PDBQT/logs, CSV summaries, and ZIP archives
@@ -78,7 +79,7 @@ MetalBind-main/
 ## Demo Tab Assets
 The *Demo* tab is preconfigured for 8 Zinc Metal Proteins. To use it:
 1. **Download the demo assets** from the `Zinc Metal Protein Receptors` and `8 Endogenous Ligands` folders in the repository.
-2. Place these folders alongside `MetalBind.py` (locally) or upload their contents to the Streamlit Cloud workspace under the same folder names.
+2. Place these folders alongside `MBind.py` (locally) or upload their contents to the Streamlit Cloud workspace under the same folder names.
 3. In the app, choose from the 8 zinc metal proteins: hACE, HDAC2, HDAC8 with Hydroxamic Acid, HDAC8 with SAHA, HDAC10, Human Neutral Endopeptidase, Leukotriene, or ADAMTS-5. Grid centers, sizes, spacing (0.375 Å), and docking parameters lock automatically.
 4. Upload one of the bundled receptors (PDBQT) and select ligands from the endogenous ligand set before running AD4 map building or docking.
 
@@ -89,7 +90,8 @@ Without these folders, the Demo tab cannot find receptors/ligands and will show 
 - **Documentation**: Full step-by-step instructions (see above) covering CSV ingestion, module selection, epitope features, VaxiJen workflow, aggregated file processing, and population coverage.
 - **Demo**: AD4-only workflow with one-click presets for 8 Zinc Metal Proteins. Requires the demo receptor/ligand folders.
 - **Standard AutoDock**: Vina-focused workflow with user-defined grid boxes.
-- **Metalloprotein Docking**: AD4 workflow with full control over grid/map settings.
+- **Metalloprotein Docking**: AD4 workflow with full control over grid/map settings (zinc-style merged parameters).
+- **Fe / Cu / Mg Docking**: Same AD4 map + Vina(AD4) flow as zinc, using bundled `AD4_parameters_plus_FeTF.dat`, `...CuTQ.dat`, or `...MgTM.dat` and the matching pseudo-atom script.
 
 ## Usage Workflow
 1. **Upload receptor** (PDBQT) via file uploader or path.
@@ -113,9 +115,11 @@ Without these folders, the Demo tab cannot find receptors/ligands and will show 
 
 
 ## Configuration Files
-Executables and parameters are auto-detected from `Files_for_GUI/`. Ensure permissions are set (`chmod +x` on Linux). Optional scripts:
-- `zinc_pseudo.py` for inserting tetrahedral Zn pseudoatoms
-- `AD4_parameters.dat` / `AD4Zn.dat` for AD4 scoring
+Executables and parameters are auto-detected from `Files_for_GUI/` next to `MBind.py` (falls back to `Working directory/Files_for_GUI` if needed). Ensure permissions are set (`chmod +x` on Linux). Scripts and data:
+- `zinc_pseudo.py` — tetrahedral Zn pseudoatoms (TZ)
+- `iron_pseudo.py`, `copper_pseudo.py`, `magnesium_pseudo.py` — TF, TQ, TM pseudoatoms
+- `AD4_parameters.dat` / `AD4Zn.dat` — zinc AD4 merge (Demo / general tab)
+- `ad4_maps/AD4_parameters_plus_*.dat` — pre-merged maps for ZnTZ, FeTF, CuTQ, MgTM
 
 ## Contact
 Questions, bug reports, or collaboration requests: **Dr. Sivanesan Dakshanamurthy** — sd233@georgetown.edu

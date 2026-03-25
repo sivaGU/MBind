@@ -30,12 +30,12 @@ For the Demo tab to work, you need to populate two folders:
 **Windows:**
 Double-click `run_docking.bat` or run:
 ```bash
-streamlit run MetalBind.py
+streamlit run MBind.py
 ```
 
 **Linux/Mac:**
 ```bash
-streamlit run MetalBind.py
+streamlit run MBind.py
 ```
 
 The application will open in your browser at `http://localhost:8501`
@@ -44,7 +44,7 @@ The application will open in your browser at `http://localhost:8501`
 
 ```
 MBind/
-├── MetalBind.py                    # Main MBind Streamlit application
+├── MBind.py                        # Main MBind Streamlit application
 ├── README.md                       # Full documentation
 ├── requirements.txt                # Python dependencies
 ├── run_docking.bat                 # Windows launcher script
@@ -55,8 +55,11 @@ MBind/
 │   ├── autogrid4                   # AutoGrid4 executable
 │   ├── autodock4                   # AutoDock4 executable
 │   ├── AD4_parameters.dat          # AD4 parameters
-│   ├── AD4Zn.dat                   # AD4 zinc parameters
-│   ├── zinc_pseudo.py              # Zinc pseudoatom script
+│   ├── AD4Zn.dat                   # AD4 zinc extra (merge for Zn/TZ)
+│   ├── AD4Fe.dat, AD4Cu.dat, AD4Mg.dat  # Extra blocks for Fe/Cu/Mg
+│   ├── ad4_maps/                   # Pre-merged: ZnTZ, FeTF, CuTQ, MgTM
+│   ├── zinc_pseudo.py              # Zn pseudoatom (TZ)
+│   ├── iron_pseudo.py, copper_pseudo.py, magnesium_pseudo.py  # TF, TQ, TM
 │   └── Ligands/                    # Sample ligands
 ├── (DEMO) Zinc Metal Protein Receptors/  # Demo receptors (populate with 8 PDBQT files)
 └── (DEMO) Ligands/                 # Demo ligands (populate with 8 PDBQT files)

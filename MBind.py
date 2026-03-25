@@ -97,7 +97,7 @@ def render_home_page():
     )
     st.subheader("Highlights")
     st.markdown(
-        "- Metalloprotein aware grid generation with optional zinc pseudo atoms\n"
+        "- Metalloprotein aware AD4 maps: zinc (TZ) plus **Fe / Cu / Mg** (TF / TQ / TM) in a dedicated tab\n"
         "- AD4 scoring workflow including intermolecular, internal, and torsional components\n"
         "- Auto-detected executables and reproducible working directory layout\n"
         "- Shared engine for both the Streamlit GUI and the CLI presets"
@@ -123,7 +123,7 @@ def render_home_page():
     )
     st.subheader("Automation Tip")
     st.write(
-        "The CLI entry point (`python MetalBind.py --cli ...`) shares the same code paths as the GUI. "
+        "The CLI entry point (`python MBind.py --cli ...`) shares the same code paths as the GUI. "
         "Use it to script batch runs after maps are prepared."
     )
 
@@ -306,7 +306,8 @@ def render_documentation_page():
         "**2. Review the navigation tabs.**\\n"
         "- *Demo*: AD4 workflow with zinc metal protein presets.\\n"
         "- *Standard AutoDock*: Vina box docking.\\n"
-        "- *Metalloprotein Docking*: Manual AD4 configuration."
+        "- *Metalloprotein Docking*: Manual AD4 configuration (zinc-style parameters).\\n"
+        "- *Fe / Cu / Mg Docking*: AD4 maps for iron, copper, or magnesium using bundled pseudo scripts and merged `.dat` files."
     )
 
     st.subheader("2. Provide Receptor & Ligands")
@@ -621,6 +622,44 @@ def run_zinc_pseudo(python_exe: Path, script: Path, receptor_in: Path, receptor_
         [current_python, str(script), "-r", str(receptor_in.absolute()), "-o", str(receptor_tz_out.absolute())],
         capture_output=True, text=True, timeout=300
     )
+
+
+# ---- Fe / Cu / Mg metalloprotein tab (bundled Files_for_GUI/ad4_maps + pseudo scripts) ----
+FECUMG_METAL_OPTIONS: List[Tuple[str, Dict[str, str]]] = [
+    (
+        "Iron (Fe) — tetrahedral TF pseudo",
+        {"script": "iron_pseudo.py", "merged_dat": "AD4_parameters_plus_FeTF.dat", "pseudo_type": "TF"},
+    ),
+    (
+        "Copper (Cu) — tetrahedral TQ pseudo",
+        {"script": "copper_pseudo.py", "merged_dat": "AD4_parameters_plus_CuTQ.dat", "pseudo_type": "TQ"},
+    ),
+    (
+        "Magnesium (Mg) — tetrahedral TM pseudo",
+        {"script": "magnesium_pseudo.py", "merged_dat": "AD4_parameters_plus_MgTM.dat", "pseudo_type": "TM"},
+    ),
+]
+FECUMG_LOOKUP: Dict[str, Dict[str, str]] = {label: spec for label, spec in FECUMG_METAL_OPTIONS}
+
+AD4_STRIP_PHYS_METALS = {
+    "K", "NA", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI",
+    "Fe", "Cu", "Mg", "Zn", "Ca", "Cl",
+}
+
+
+def filter_receptor_strip_phys_metal_lines(src: Path, dst: Path) -> None:
+    """Remove physical metal-ion AD4 types from receptor; keep TF/TQ/TM pseudo atoms."""
+    bad = {x.upper() for x in AD4_STRIP_PHYS_METALS}
+    with open(src, "r", errors="ignore") as fin, open(dst, "w", encoding="utf-8") as fout:
+        for line in fin:
+            if line.startswith(("ATOM", "HETATM")):
+                t = line[77:79].strip() if len(line) > 78 else ""
+                if not t:
+                    t = line.split()[-1]
+                if t.upper() in bad:
+                    continue
+            fout.write(line)
+
 
 def write_simple_gpf(
     gpf_path: Path,
@@ -2239,6 +2278,7 @@ nav_pages = [
     "MBind Demo",
     "Standard AutoDock",
     "Metalloprotein Docking",
+    "Fe / Cu / Mg Docking",
     "GNINA ML Docking",
 ]
 
@@ -2280,10 +2320,17 @@ page_mode = {
     "MBind Demo": "ad4",
     "Standard AutoDock": "vina",
     "Metalloprotein Docking": "ad4",
+    "Fe / Cu / Mg Docking": "ad4",
     "GNINA ML Docking": "gnina",
 }.get(page, "generic")
 
-state_prefix = "demo" if page == "MBind Demo" else page_mode
+state_prefix = (
+    "demo"
+    if page == "MBind Demo"
+    else "fecumg"
+    if page == "Fe / Cu / Mg Docking"
+    else page_mode
+)
 
 # Session state initialisation for docking workflow
 if "docking_task" not in st.session_state:
@@ -2302,6 +2349,14 @@ if "docking_status_message" not in st.session_state:
     st.session_state.docking_status_message = None
 
 st.title(page)
+
+if page == "Fe / Cu / Mg Docking":
+    st.info(
+        "**Fe / Cu / Mg metalloprotein docking** mirrors the zinc workflow: upload a receptor PDBQT with the ion, "
+        "choose the metal below, then **Build/Update AD4 Maps** (the app runs the matching tetrahedral pseudo-atom "
+        "script and copies the merged parameter file from `Files_for_GUI/ad4_maps/`). "
+        "Dock with backend **AD4 (maps)** the same way as **Metalloprotein Docking**."
+    )
 
 # GNINA-specific info about using provided zinc metal protein receptors/ligands or own files
 if page_mode == "gnina":
@@ -2429,6 +2484,17 @@ with upload_col2:
         st.caption(f"{len(ligand_paths)} ligand(s) ready: {preview}")
     else:
         st.info("Upload one or more ligand PDBQT files to continue.")
+
+metal_gui_selection: Optional[str] = None
+if page == "Fe / Cu / Mg Docking":
+    st.subheader("Metal ion and AD4 parameter set")
+    metal_gui_selection = st.selectbox(
+        "Target metal (pseudo atom + merged .dat)",
+        options=[label for label, _ in FECUMG_METAL_OPTIONS],
+        index=0,
+        key="fecumg_metal_select",
+        help="Iron → TF + AD4_parameters_plus_FeTF.dat; Copper → TQ + ...CuTQ.dat; Magnesium → TM + ...MgTM.dat",
+    )
 
 # ---------------------------------------------
 
@@ -2670,7 +2736,9 @@ with st.expander("Configuration", expanded=True):
             force_extra_types = "S,NA"
             build_maps_btn = False
 
-files_gui_dir = work_dir / "Files_for_GUI"
+_repo_gui_dir = REPO_ROOT / "Files_for_GUI"
+_work_gui_dir = work_dir / "Files_for_GUI"
+files_gui_dir = _repo_gui_dir if _repo_gui_dir.is_dir() else _work_gui_dir.resolve()
 is_windows = platform.system() == "Windows"
 
 # ==============================
@@ -2843,12 +2911,14 @@ if build_maps_btn:
             if force_extra_types:
                 force_types = {tok.strip().upper() for tok in force_extra_types.split(",") if tok.strip()}
 
+            use_fecumg_maps = page == "Fe / Cu / Mg Docking"
+
             with st.spinner("Building AutoGrid4 maps..."):
                 if receptor_path is None or not receptor_path.exists():
                     raise FileNotFoundError("Upload a receptor PDBQT before building maps.")
                 if autogrid_exe is None or not autogrid_exe.exists():
                     raise FileNotFoundError("AutoGrid4 executable not found. Set it in the Executables section before building maps.")
-                if base_params is None or not base_params.exists():
+                if not use_fecumg_maps and (base_params is None or not base_params.exists()):
                     raise FileNotFoundError("AD4_parameters.dat is missing. Configure it in the Executables section before building maps.")
 
                 spacing_val = float(spacing)
@@ -2862,8 +2932,30 @@ if build_maps_btn:
                 maps_dir = maps_prefix_clean.parent
                 maps_dir.mkdir(parents=True, exist_ok=True)
 
-                merged_params = maps_dir / "AD4_parameters_plus_ZnTZ.dat"
-                merge_parameter_files(base_params, extra_params, merged_params)
+                use_fecumg = use_fecumg_maps
+                mspec: Optional[Dict[str, str]] = None
+                ps_script: Optional[Path] = None
+                if use_fecumg:
+                    if not metal_gui_selection:
+                        raise ValueError("Select Fe, Cu, or Mg before building AD4 maps.")
+                    mspec = FECUMG_LOOKUP[metal_gui_selection]
+                    merged_src = files_gui_dir / "ad4_maps" / mspec["merged_dat"]
+                    if not merged_src.is_file():
+                        raise FileNotFoundError(
+                            f"Missing {merged_src.name} under Files_for_GUI/ad4_maps. "
+                            "Commit the bundled ad4_maps files for GitHub/Streamlit."
+                        )
+                    merged_params = maps_dir / merged_src.name
+                    shutil.copy2(merged_src, merged_params)
+                    ps_script = files_gui_dir / mspec["script"]
+                    if not ps_script.is_file():
+                        raise FileNotFoundError(
+                            f"Missing pseudo script {mspec['script']} in Files_for_GUI. "
+                            "Add iron_pseudo.py, copper_pseudo.py, and magnesium_pseudo.py to the repo."
+                        )
+                else:
+                    merged_params = maps_dir / "AD4_parameters_plus_ZnTZ.dat"
+                    merge_parameter_files(base_params, extra_params, merged_params)
 
                 receptor_copy = maps_dir / receptor_path.name
                 shutil.copy2(receptor_path, receptor_copy)
@@ -2879,27 +2971,57 @@ if build_maps_btn:
                         pass
 
                 invalid_types = {"K", "NA", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI"}
-                rec_filtered = maps_dir / f"{receptor_copy.stem}_filtered.pdbqt"
-                try:
-                    with open(receptor_copy, "r", errors="ignore") as fin, open(rec_filtered, "w", encoding="utf-8") as fout:
-                        for line in fin:
-                            if line.startswith(("ATOM", "HETATM")):
-                                toks = line.split()
-                                if toks and toks[-1] in invalid_types:
-                                    continue
-                            fout.write(line)
-                    if rec_filtered.stat().st_size == 0:
-                        rec_filtered.unlink(missing_ok=True)
-                        rec_filtered = receptor_copy
-                except Exception:
-                    rec_filtered = receptor_copy
-                rec_tz = rec_filtered
+                bad_metal_upper = {x.upper() for x in AD4_STRIP_PHYS_METALS}
 
-                rec_types = [t for t in read_types_from_pdbqt(rec_tz) if t not in invalid_types]
-                if not rec_types:
-                    rec_types = [t for t in read_types_from_pdbqt(receptor_copy) if t not in invalid_types]
-                if not rec_types:
-                    raise ValueError("No valid receptor atom types detected after filtering. Check the receptor PDBQT file.")
+                if use_fecumg and mspec is not None and ps_script is not None:
+                    pseudo_type = mspec["pseudo_type"]
+                    rec_pseudo = maps_dir / f"{receptor_copy.stem}_{pseudo_type}.pdbqt"
+                    pseudo_proc = run_zinc_pseudo(python_exe, ps_script, receptor_copy, rec_pseudo)
+                    if pseudo_proc.returncode != 0:
+                        pe = (pseudo_proc.stderr or "") + "\n" + (pseudo_proc.stdout or "")
+                        st.code(pe.strip() or "(no pseudo script output)", language="text")
+                        raise RuntimeError(
+                            f"Pseudo-atom script {mspec['script']} failed (exit {pseudo_proc.returncode}). "
+                            "Check that the receptor contains the expected ion (Fe/Cu/Mg) in AD4 format."
+                        )
+                    rec_filtered = maps_dir / f"{rec_pseudo.stem}_filtered.pdbqt"
+                    try:
+                        filter_receptor_strip_phys_metal_lines(rec_pseudo, rec_filtered)
+                        if not rec_filtered.exists() or rec_filtered.stat().st_size == 0:
+                            rec_filtered.unlink(missing_ok=True)
+                            rec_filtered = rec_pseudo
+                    except Exception:
+                        rec_filtered = rec_pseudo
+                    rec_tz = rec_filtered
+                    rec_types = [
+                        t for t in read_types_from_pdbqt(rec_tz)
+                        if t.upper() not in bad_metal_upper
+                    ]
+                    if pseudo_type not in rec_types:
+                        rec_types.append(pseudo_type)
+                    if not rec_types:
+                        raise ValueError("No valid receptor atom types after Fe/Cu/Mg pseudo processing.")
+                else:
+                    rec_filtered = maps_dir / f"{receptor_copy.stem}_filtered.pdbqt"
+                    try:
+                        with open(receptor_copy, "r", errors="ignore") as fin, open(rec_filtered, "w", encoding="utf-8") as fout:
+                            for line in fin:
+                                if line.startswith(("ATOM", "HETATM")):
+                                    toks = line.split()
+                                    if toks and toks[-1] in invalid_types:
+                                        continue
+                                fout.write(line)
+                        if rec_filtered.stat().st_size == 0:
+                            rec_filtered.unlink(missing_ok=True)
+                            rec_filtered = receptor_copy
+                    except Exception:
+                        rec_filtered = receptor_copy
+                    rec_tz = rec_filtered
+                    rec_types = [t for t in read_types_from_pdbqt(rec_tz) if t not in invalid_types]
+                    if not rec_types:
+                        rec_types = [t for t in read_types_from_pdbqt(receptor_copy) if t not in invalid_types]
+                    if not rec_types:
+                        raise ValueError("No valid receptor atom types detected after filtering. Check the receptor PDBQT file.")
 
                 ligand_types = ligand_types_union(ligand_paths) if ligand_paths else set()
                 if force_types:
