@@ -661,75 +661,74 @@ FECUMG_METAL_OPTIONS: List[Tuple[str, Dict[str, str]]] = [
 ]
 FECUMG_LOOKUP: Dict[str, Dict[str, str]] = {label: spec for label, spec in FECUMG_METAL_OPTIONS}
 
-FECUMG_RECEPTOR_PDBIDS: Dict[str, List[str]] = {
-    "FE": ["2HBT", "2G19"],
-    "CU": ["6QXD", "6EI4"],
-    "MG": ["2F8Z", "3S68", "4ZQF", "5CG5", "7XGI", "8FNG"],
+FECUMG_TABLE_S1_PRESETS: Dict[str, List[Dict[str, object]]] = {
+    "FE": [
+        {
+            "pdb_id": "2HBT",
+            "receptor_name": "HIF prolyl hydroxylase EGLN-1",
+            "size": (24.0, 24.0, 24.0),
+            "center": (-40.3154, -20.9111, 4.8059),
+        },
+        {
+            "pdb_id": "2G19",
+            "receptor_name": "PHD2",
+            "size": (24.0, 24.0, 24.0),
+            "center": (1.9388, 45.3759, 26.8546),
+        },
+    ],
+    "CU": [
+        {
+            "pdb_id": "6QXD",
+            "receptor_name": "Tyrosinase with JKB inhibitor",
+            "size": (24.0, 24.0, 24.0),
+            "center": (27.5272, 16.4859, 95.2577),
+        },
+        {
+            "pdb_id": "6EI4",
+            "receptor_name": "Tyrosinase with B5N inhibitor",
+            "size": (24.0, 24.0, 24.0),
+            "center": (-0.7385, -16.5417, 13.6834),
+        },
+    ],
+    "MG": [
+        {
+            "pdb_id": "2F8Z",
+            "receptor_name": "FPPS",
+            "size": (24.0, 20.0, 24.0),
+            "center": (15.906, 78.415, 24.791),
+        },
+        {
+            "pdb_id": "3S68",
+            "receptor_name": "COMT with SAM and Tolcapone",
+            "size": (24.0, 22.0, 24.0),
+            "center": (-8.381, 44.667, 68.84),
+        },
+        {
+            "pdb_id": "4ZQF",
+            "receptor_name": "DOX-P",
+            "size": (26.0, 24.0, 26.0),
+            "center": (11.873, -4.575, 20.895),
+        },
+        {
+            "pdb_id": "5CG5",
+            "receptor_name": "Human Farnesyl Pyrophosphate Synthase",
+            "size": (28.0, 26.0, 26.0),
+            "center": (16.396, -33.492, -9.401),
+        },
+        {
+            "pdb_id": "7XGI",
+            "receptor_name": "COMT with SAM and Tolcapone",
+            "size": (26.0, 24.0, 24.0),
+            "center": (38.2, -8.713, -3.372),
+        },
+        {
+            "pdb_id": "8FNG",
+            "receptor_name": "G140A HIV-1",
+            "size": (26.0, 28.0, 30.0),
+            "center": (52.833, 68.249, 85.32),
+        },
+    ],
 }
-TABLE_S1_FILENAME = "Supplementary Tables - MBind - Table S1.csv"
-
-
-def _parse_triplet_csv_numbers(raw: str) -> Optional[Tuple[float, float, float]]:
-    tokens = [tok.strip() for tok in str(raw).split(",") if tok.strip()]
-    if len(tokens) != 3:
-        return None
-    try:
-        return (float(tokens[0]), float(tokens[1]), float(tokens[2]))
-    except Exception:
-        return None
-
-
-def _find_table_s1_csv() -> Optional[Path]:
-    candidates = [
-        REPO_ROOT / TABLE_S1_FILENAME,
-        REPO_ROOT.parent / TABLE_S1_FILENAME,
-        Path.cwd() / TABLE_S1_FILENAME,
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate.resolve()
-    return None
-
-
-@st.cache_data(show_spinner=False)
-def _load_table_s1_presets() -> Dict[str, Dict[str, object]]:
-    csv_path = _find_table_s1_csv()
-    if not csv_path:
-        return {}
-
-    presets: Dict[str, Dict[str, object]] = {}
-    with open(csv_path, "r", encoding="utf-8-sig", newline="") as fin:
-        rows = list(csv.reader(fin))
-        header_idx = None
-        for idx, row in enumerate(rows):
-            normalized = [str(col).strip() for col in row]
-            if "Receptor" in normalized and "PDB ID" in normalized:
-                header_idx = idx
-                break
-        if header_idx is None:
-            return {}
-
-        header = [str(col).strip() for col in rows[header_idx]]
-        for row in rows[header_idx + 1 :]:
-            if not any(str(col).strip() for col in row):
-                continue
-            row_map = {
-                header[i]: (row[i] if i < len(row) else "")
-                for i in range(len(header))
-            }
-            pdb_id = str(row_map.get("PDB ID", "")).strip().upper()
-            receptor_name = str(row_map.get("Receptor", "")).strip()
-            size_xyz = _parse_triplet_csv_numbers(row_map.get("Grid Box Parameters (x, y, z)", ""))
-            center_xyz = _parse_triplet_csv_numbers(row_map.get("Center Coordinates (x, y, z)", ""))
-            if not pdb_id or not receptor_name or size_xyz is None or center_xyz is None:
-                continue
-            presets[pdb_id] = {
-                "pdb_id": pdb_id,
-                "receptor_name": receptor_name,
-                "size": size_xyz,
-                "center": center_xyz,
-            }
-    return presets
 
 AD4_STRIP_PHYS_METALS = {
     "K", "NA", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI",
@@ -2599,13 +2598,8 @@ if page == PAGE_FEMGCU_METALLO_DOCKING:
             f"Mg{SUP2} → TM + AD4_parameters_plus_MgTM.dat"
         ),
     )
-    metal_symbol = FECUMG_LOOKUP.get(metal_gui_selection, {}).get("metal_symbol")
-    table_s1_presets = _load_table_s1_presets()
-    receptor_options: List[Dict[str, object]] = []
-    for pdb_id in FECUMG_RECEPTOR_PDBIDS.get(str(metal_symbol), []):
-        preset = table_s1_presets.get(pdb_id)
-        if preset:
-            receptor_options.append(preset)
+    metal_symbol = str(FECUMG_LOOKUP.get(metal_gui_selection, {}).get("metal_symbol", ""))
+    receptor_options = list(FECUMG_TABLE_S1_PRESETS.get(metal_symbol, []))
 
     if receptor_options:
         st.markdown("**Receptor preset from Table S1 (auto-fills grid box; still editable):**")
@@ -2626,7 +2620,7 @@ if page == PAGE_FEMGCU_METALLO_DOCKING:
         fecumg_preset_changed = previous_choice != selected_receptor_label
     else:
         st.info(
-            f"No Table S1 receptor presets found for {metal_gui_selection}. "
+            f"No hardcoded Table S1 receptor presets found for {metal_gui_selection}. "
             "Grid box values can still be entered manually."
         )
 
