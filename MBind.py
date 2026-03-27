@@ -633,18 +633,103 @@ def run_zinc_pseudo(python_exe: Path, script: Path, receptor_in: Path, receptor_
 FECUMG_METAL_OPTIONS: List[Tuple[str, Dict[str, str]]] = [
     (
         f"Iron (Fe{SUP2})",
-        {"script": "iron_pseudo.py", "merged_dat": "AD4_parameters_plus_FeTF.dat", "pseudo_type": "TF"},
+        {
+            "script": "iron_pseudo.py",
+            "merged_dat": "AD4_parameters_plus_FeTF.dat",
+            "pseudo_type": "TF",
+            "metal_symbol": "FE",
+        },
     ),
     (
         f"Copper (Cu{SUP2})",
-        {"script": "copper_pseudo.py", "merged_dat": "AD4_parameters_plus_CuTQ.dat", "pseudo_type": "TQ"},
+        {
+            "script": "copper_pseudo.py",
+            "merged_dat": "AD4_parameters_plus_CuTQ.dat",
+            "pseudo_type": "TQ",
+            "metal_symbol": "CU",
+        },
     ),
     (
         f"Magnesium (Mg{SUP2})",
-        {"script": "magnesium_pseudo.py", "merged_dat": "AD4_parameters_plus_MgTM.dat", "pseudo_type": "TM"},
+        {
+            "script": "magnesium_pseudo.py",
+            "merged_dat": "AD4_parameters_plus_MgTM.dat",
+            "pseudo_type": "TM",
+            "metal_symbol": "MG",
+        },
     ),
 ]
 FECUMG_LOOKUP: Dict[str, Dict[str, str]] = {label: spec for label, spec in FECUMG_METAL_OPTIONS}
+
+FECUMG_RECEPTOR_PDBIDS: Dict[str, List[str]] = {
+    "FE": ["2HBT", "2G19"],
+    "CU": ["6QXD", "6EI4"],
+    "MG": ["2F8Z", "3S68", "4ZQF", "5CG5", "7XGI", "8FNG"],
+}
+TABLE_S1_FILENAME = "Supplementary Tables - MBind - Table S1.csv"
+
+
+def _parse_triplet_csv_numbers(raw: str) -> Optional[Tuple[float, float, float]]:
+    tokens = [tok.strip() for tok in str(raw).split(",") if tok.strip()]
+    if len(tokens) != 3:
+        return None
+    try:
+        return (float(tokens[0]), float(tokens[1]), float(tokens[2]))
+    except Exception:
+        return None
+
+
+def _find_table_s1_csv() -> Optional[Path]:
+    candidates = [
+        REPO_ROOT / TABLE_S1_FILENAME,
+        REPO_ROOT.parent / TABLE_S1_FILENAME,
+        Path.cwd() / TABLE_S1_FILENAME,
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve()
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def _load_table_s1_presets() -> Dict[str, Dict[str, object]]:
+    csv_path = _find_table_s1_csv()
+    if not csv_path:
+        return {}
+
+    presets: Dict[str, Dict[str, object]] = {}
+    with open(csv_path, "r", encoding="utf-8-sig", newline="") as fin:
+        rows = list(csv.reader(fin))
+        header_idx = None
+        for idx, row in enumerate(rows):
+            normalized = [str(col).strip() for col in row]
+            if "Receptor" in normalized and "PDB ID" in normalized:
+                header_idx = idx
+                break
+        if header_idx is None:
+            return {}
+
+        header = [str(col).strip() for col in rows[header_idx]]
+        for row in rows[header_idx + 1 :]:
+            if not any(str(col).strip() for col in row):
+                continue
+            row_map = {
+                header[i]: (row[i] if i < len(row) else "")
+                for i in range(len(header))
+            }
+            pdb_id = str(row_map.get("PDB ID", "")).strip().upper()
+            receptor_name = str(row_map.get("Receptor", "")).strip()
+            size_xyz = _parse_triplet_csv_numbers(row_map.get("Grid Box Parameters (x, y, z)", ""))
+            center_xyz = _parse_triplet_csv_numbers(row_map.get("Center Coordinates (x, y, z)", ""))
+            if not pdb_id or not receptor_name or size_xyz is None or center_xyz is None:
+                continue
+            presets[pdb_id] = {
+                "pdb_id": pdb_id,
+                "receptor_name": receptor_name,
+                "size": size_xyz,
+                "center": center_xyz,
+            }
+    return presets
 
 AD4_STRIP_PHYS_METALS = {
     "K", "NA", "MG", "CA", "CL", "FE", "MN", "ZN", "CU", "CO", "NI",
@@ -2499,6 +2584,8 @@ with upload_col2:
         st.info("Upload one or more ligand PDBQT files to continue.")
 
 metal_gui_selection: Optional[str] = None
+fecumg_selected_receptor_preset: Optional[Dict[str, object]] = None
+fecumg_preset_changed = False
 if page == PAGE_FEMGCU_METALLO_DOCKING:
     st.subheader("Metal ion and AD4 parameter set")
     metal_gui_selection = st.selectbox(
@@ -2512,6 +2599,36 @@ if page == PAGE_FEMGCU_METALLO_DOCKING:
             f"Mg{SUP2} → TM + AD4_parameters_plus_MgTM.dat"
         ),
     )
+    metal_symbol = FECUMG_LOOKUP.get(metal_gui_selection, {}).get("metal_symbol")
+    table_s1_presets = _load_table_s1_presets()
+    receptor_options: List[Dict[str, object]] = []
+    for pdb_id in FECUMG_RECEPTOR_PDBIDS.get(str(metal_symbol), []):
+        preset = table_s1_presets.get(pdb_id)
+        if preset:
+            receptor_options.append(preset)
+
+    if receptor_options:
+        st.markdown("**Receptor preset from Table S1 (auto-fills grid box; still editable):**")
+        receptor_labels = [
+            f"{item['receptor_name']} ({item['pdb_id']})"
+            for item in receptor_options
+        ]
+        receptor_lookup = dict(zip(receptor_labels, receptor_options))
+        receptor_key = f"{state_prefix}_fecumg_receptor_choice"
+        previous_choice = st.session_state.get(receptor_key)
+        selected_receptor_label = st.selectbox(
+            "Receptor binding complex",
+            options=receptor_labels,
+            key=f"{state_prefix}_fecumg_receptor_select",
+        )
+        st.session_state[receptor_key] = selected_receptor_label
+        fecumg_selected_receptor_preset = receptor_lookup[selected_receptor_label]
+        fecumg_preset_changed = previous_choice != selected_receptor_label
+    else:
+        st.info(
+            f"No Table S1 receptor presets found for {metal_gui_selection}. "
+            "Grid box values can still be entered manually."
+        )
 
 # ---------------------------------------------
 
@@ -2643,6 +2760,10 @@ with st.expander("Configuration", expanded=True):
         default_size = grid_defaults["size"]
         default_spacing = grid_defaults["spacing"]
 
+        if page == PAGE_FEMGCU_METALLO_DOCKING and fecumg_selected_receptor_preset:
+            default_center = fecumg_selected_receptor_preset["center"]  # type: ignore[assignment]
+            default_size = fecumg_selected_receptor_preset["size"]  # type: ignore[assignment]
+
         if page == "MBind Demo":
             for idx, axis in enumerate(["x", "y", "z"]):
                 center_key = center_keys[axis]
@@ -2655,9 +2776,13 @@ with st.expander("Configuration", expanded=True):
             for idx, axis in enumerate(["x", "y", "z"]):
                 center_key = center_keys[axis]
                 size_key = size_keys[axis]
-                if center_key not in st.session_state:
+                if center_key not in st.session_state or (
+                    page == PAGE_FEMGCU_METALLO_DOCKING and fecumg_preset_changed
+                ):
                     st.session_state[center_key] = default_center[idx]
-                if size_key not in st.session_state:
+                if size_key not in st.session_state or (
+                    page == PAGE_FEMGCU_METALLO_DOCKING and fecumg_preset_changed
+                ):
                     st.session_state[size_key] = default_size[idx]
             if spacing_key not in st.session_state:
                 st.session_state[spacing_key] = default_spacing
