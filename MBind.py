@@ -48,36 +48,36 @@ PAGE_FEMGCU_METALLO_DOCKING = f"Fe{SUP2}/Mg{SUP2}/Cu{SUP2} Metalloprotein Dockin
 # Demo preset defaults - 8 Zn²⁺ metalloprotein receptors (Demo tab)
 DEMO_PRESETS = {
     "hACE": {
-        "center": (46.712, 1.0, 25.11),
-        "size": (24.0, 24.0, 24.0),
+        "center": (40.553, 32.798, 47.285),
+        "size": (30.0, 28.0, 30.0),
     },
     "HDAC2": {
-        "center": (-42.889, 1.0, 13.34),
-        "size": (22.0, 22.0, 22.0),
+        "center": (47.447, 9.539, -37.297),
+        "size": (25.0, 25.0, 25.0),
     },
     "HDAC8 with Hydroxamic Acid": {
-        "center": (122.038, 1.0, 19.8),
-        "size": (24.0, 24.0, 24.0),
+        "center": (36.385, 12.919, 122.956),
+        "size": (24.0, 22.0, 24.0),
     },
     "HDAC8 with SAHA": {
-        "center": (49.876, 18.975, -43.828),
-        "size": (24.0, 24.0, 24.0),
+        "center": (30.243, -3.216, -15.22),
+        "size": (22.0, 24.0, 24.0),
     },
     "HDAC10": {
-        "center": (32.264, 1.0, 42.62),
-        "size": (24.0, 24.0, 24.0),
+        "center": (-28.115, -40.887, 34.611),
+        "size": (34.0, 30.0, 28.0),
     },
     "Human Neutral Endopeptidase": {
-        "center": (34.610, 1.423, 1.630),
-        "size": (24.0, 24.0, 24.0),
+        "center": (27.882, 42.765, 34.683),
+        "size": (26.0, 30.0, 30.0),
     },
     "Leukotriene": {
-        "center": (34.610, 1.423, 1.630),
-        "size": (24.0, 24.0, 24.0),
+        "center": (33.767, 5.025, 1.384),
+        "size": (30.0, 28.0, 26.0),
     },
     "ADAMTS-5": {
-        "center": (-4.219, 1.0, 13.85),
-        "size": (24.0, 24.0, 24.0),
+        "center": (15.045, 4.229, -6.35),
+        "size": (22.0, 28.0, 26.0),
     },
 }
 
