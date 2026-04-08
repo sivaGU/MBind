@@ -2,7 +2,7 @@
 
 MBind is a Streamlit-based interface that wraps AutoDock Vina and AutoDock4 (AD4) so metalloprotein docking runs are easy to configure, execute, and review.
 
-Hosted app: https://g8sfrb59jfx7ohqfzr5fko.streamlit.app/
+Hosted app: https://mbindgui.streamlit.app/
 
 ## Contents
 - [Quick Start (Cloud)](#quick-start-cloud)
