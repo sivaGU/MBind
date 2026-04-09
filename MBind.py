@@ -29,6 +29,16 @@ try:
 except ImportError:
     HAS_REQUESTS = False
 
+try:
+    import py3Dmol
+    import streamlit.components.v1 as st_components
+
+    HAS_PY3DMOL = True
+except ImportError:
+    HAS_PY3DMOL = False
+    py3Dmol = None  # type: ignore
+    st_components = None  # type: ignore
+
 
 # ---- MBind Theme Palette ----
 LIGHT_POWDER_BLUE = "#6B9FC0"     # Darker Light Powder Blue
@@ -1667,6 +1677,87 @@ def extract_all_poses(input_pdbqt: Path, output_dir: Path, max_poses: int = 10) 
     except Exception:
         return []
 
+
+def _ligand_struct_text_for_view(pose_path: Path) -> Optional[str]:
+    """Return PDBQT-like text for the first docked pose (multi-MODEL or single block)."""
+    tmp: Optional[Path] = None
+    try:
+        import tempfile
+
+        tmp = Path(tempfile.gettempdir()) / f"mbind_top_pose_{pose_path.stem}.pdbqt"
+        if extract_first_pose_simple(pose_path, tmp) and tmp.exists() and tmp.stat().st_size > 0:
+            return tmp.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        pass
+    finally:
+        if tmp is not None:
+            try:
+                tmp.unlink(missing_ok=True)
+            except Exception:
+                pass
+    try:
+        lines_out: List[str] = []
+        with open(pose_path, "r", errors="ignore") as f:
+            for line in f:
+                if line.startswith(("ATOM", "HETATM")):
+                    lines_out.append(line)
+        return "".join(lines_out) if lines_out else None
+    except Exception:
+        return None
+
+
+def _pick_top_pose_row(rows: List[dict]) -> Optional[dict]:
+    """Choose the row with best (lowest) binding affinity among rows with an existing output PDBQT."""
+    scored: List[Tuple[float, dict]] = []
+    fallback: List[dict] = []
+    for r in rows:
+        op = r.get("Output_File")
+        if not op or not Path(op).exists():
+            continue
+        fallback.append(r)
+        aff = r.get("Binding_Affinity")
+        if aff in (None, "", "N/A"):
+            aff = r.get("AD4_Affinity")
+        try:
+            scored.append((float(aff), r))
+        except (TypeError, ValueError):
+            pass
+    if scored:
+        scored.sort(key=lambda x: x[0])
+        return scored[0][1]
+    return fallback[0] if fallback else None
+
+
+def _binding_complex_view_html(
+    receptor_path: Path,
+    pose_path: Path,
+    width: int = 720,
+    height: int = 520,
+) -> Optional[str]:
+    """Build HTML for py3Dmol view: receptor cartoon + top pose sticks."""
+    if not HAS_PY3DMOL or py3Dmol is None:
+        return None
+    try:
+        rec_text = receptor_path.read_text(encoding="utf-8", errors="ignore")
+        if not rec_text.strip():
+            return None
+        lig_text = _ligand_struct_text_for_view(pose_path)
+        if not lig_text or not lig_text.strip():
+            return None
+        view = py3Dmol.view(width=width, height=height)
+        view.addModel(rec_text, "pdb")
+        view.setStyle({"model": 0}, {"cartoon": {"color": "spectrum"}})
+        view.addModel(lig_text, "pdb")
+        view.setStyle(
+            {"model": 1},
+            {"stick": {"radius": 0.13, "colorscheme": "greenCarbon"}},
+        )
+        view.zoomTo()
+        return view._make_html()
+    except Exception:
+        return None
+
+
 def parse_ad4_verbose_output(stdout: str) -> dict:
     """Parse AD4 verbose output for energy components"""
     
@@ -3251,12 +3342,60 @@ def _render_docking_results_fragment(
     results_backend: str,
     results_out_dir: Optional[Path],
     widget_key_prefix: str,
+    receptor_path_for_viz: Optional[str],
 ) -> None:
     """Render results and download buttons in a fragment so download clicks only rerun this block."""
     drop_cols = [c for c in rows[0].keys() if c.startswith("AD4_")]
     df = pd.DataFrame(rows)
     st.success("Docking complete.")
     st.dataframe(df[[c for c in df.columns if c not in drop_cols]], use_container_width=True)
+
+    st.subheader("Binding complex (3D)")
+    viz_options: List[Tuple[str, dict]] = []
+    for idx, row in enumerate(rows):
+        op = row.get("Output_File")
+        if not op or not Path(op).exists():
+            continue
+        name = row.get("Ligand", f"Ligand {idx + 1}")
+        aff = row.get("Binding_Affinity")
+        if aff in (None, "", "N/A"):
+            aff = row.get("AD4_Affinity")
+        aff_s = f"{aff} kcal/mol" if aff not in (None, "", "N/A") else "score N/A"
+        viz_options.append((f"{name} — {aff_s}", row))
+
+    if not HAS_PY3DMOL or st_components is None:
+        st.info('Install **py3Dmol** to enable the 3D viewer: `pip install py3Dmol`')
+    elif not receptor_path_for_viz:
+        st.caption("Receptor path was not stored for this run; run docking again to enable the 3D overlay.")
+    elif not viz_options:
+        st.caption("No output pose files found to overlay.")
+    else:
+        rp = Path(receptor_path_for_viz)
+        if not rp.exists():
+            st.warning(f"Receptor file not found: `{rp}`")
+        else:
+            top_row = _pick_top_pose_row(rows)
+            default_i = 0
+            if top_row:
+                top_out = top_row.get("Output_File")
+                for j, (_, r) in enumerate(viz_options):
+                    if r.get("Output_File") == top_out:
+                        default_i = j
+                        break
+            choice_i = st.selectbox(
+                "Overlay receptor with pose from:",
+                options=list(range(len(viz_options))),
+                index=min(default_i, len(viz_options) - 1),
+                format_func=lambda i: viz_options[i][0],
+                key=f"viz_pose_pick_{widget_key_prefix}",
+            )
+            pose_p = Path(viz_options[choice_i][1]["Output_File"])
+            html = _binding_complex_view_html(rp, pose_p)
+            if html:
+                st_components.html(html, height=540, scrolling=False)
+                st.caption("Receptor: cartoon (spectrum). Docked pose: sticks (green carbon).")
+            else:
+                st.warning("Could not render the complex. Try opening the PDBQT files in an external viewer.")
 
     st.subheader("Result Files")
     for idx, row in enumerate(rows):
@@ -3334,6 +3473,7 @@ _dock_rows_key = f"{state_prefix}_docking_rows"
 _dock_ad4_key = f"{state_prefix}_docking_ad4_rows"
 _dock_backend_key = f"{state_prefix}_docking_backend"
 _dock_out_key = f"{state_prefix}_docking_out_dir"
+_dock_receptor_key = f"{state_prefix}_docking_receptor_path"
 
 rows: List[dict] = list(st.session_state.get(_dock_rows_key, []) or [])
 ad4_rows: List[dict] = list(st.session_state.get(_dock_ad4_key, []) or [])
@@ -3478,18 +3618,26 @@ if run_btn:
         st.session_state[_dock_ad4_key] = ad4_rows
         st.session_state[_dock_backend_key] = backend
         st.session_state[_dock_out_key] = str(out_dir)
+        if receptor_path is not None and receptor_path.exists():
+            st.session_state[_dock_receptor_key] = str(receptor_path.resolve())
+        elif receptor_path is not None:
+            st.session_state[_dock_receptor_key] = str(receptor_path)
 
 results_backend = st.session_state.get(_dock_backend_key, backend)
 _out_saved = st.session_state.get(_dock_out_key, "")
 results_out_dir = Path(_out_saved).resolve() if _out_saved else None
 
 if rows:
+    _viz_rec = st.session_state.get(_dock_receptor_key) or st.session_state.get(
+        f"{state_prefix}_receptor_path"
+    )
     _render_docking_results_fragment(
         rows,
         ad4_rows,
         str(results_backend),
         results_out_dir,
         state_prefix,
+        str(_viz_rec) if _viz_rec else None,
     )
 else:
     st.info("Run docking to see results.")
