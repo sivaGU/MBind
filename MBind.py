@@ -2358,7 +2358,7 @@ st.markdown(THEME_CSS, unsafe_allow_html=True)
 if "nav_open" not in st.session_state:
     st.session_state.nav_open = True
 if "current_page" not in st.session_state:
-    st.session_state.current_page = "MBind Demo"
+    st.session_state.current_page = "Home"
 
 nav_pages = [
     "Home",
@@ -2380,7 +2380,7 @@ if st.session_state.current_page in _LEGACY_NAV_ALIASES:
     st.session_state.current_page = _LEGACY_NAV_ALIASES[st.session_state.current_page]
 
 if st.session_state.current_page not in nav_pages:
-    st.session_state.current_page = "MBind Demo"
+    st.session_state.current_page = "Home"
 
 with st.sidebar:
     toggle_label = "<" if st.session_state.nav_open else ">"
@@ -3243,12 +3243,100 @@ if build_maps_btn:
 
 # Platform and executable status (silent detection - no warnings)
 
+
+@st.fragment
+def _render_docking_results_fragment(
+    rows: List[dict],
+    ad4_rows: List[dict],
+    results_backend: str,
+    results_out_dir: Optional[Path],
+    widget_key_prefix: str,
+) -> None:
+    """Render results and download buttons in a fragment so download clicks only rerun this block."""
+    drop_cols = [c for c in rows[0].keys() if c.startswith("AD4_")]
+    df = pd.DataFrame(rows)
+    st.success("Docking complete.")
+    st.dataframe(df[[c for c in df.columns if c not in drop_cols]], use_container_width=True)
+
+    st.subheader("Result Files")
+    for idx, row in enumerate(rows):
+        ligand_name = row.get("Ligand", f"Ligand {idx+1}")
+        out_path = row.get("Output_File")
+        log_path = row.get("Log_File")
+        if out_path and Path(out_path).exists():
+            archive = io.BytesIO()
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
+                zf.write(out_path, arcname=Path(out_path).name)
+                if log_path and Path(log_path).exists():
+                    zf.write(log_path, arcname=Path(log_path).name)
+            archive.seek(0)
+            st.download_button(
+                label=f"Download {ligand_name} results (ZIP)",
+                data=archive.getvalue(),
+                file_name=f"{Path(out_path).stem}.zip",
+                key=f"dl_zip_{idx}_{widget_key_prefix}",
+            )
+        else:
+            st.caption(f"No PDBQT/log available for {ligand_name}")
+
+    if results_backend == "AD4 (maps)" and ad4_rows:
+        st.subheader("AD4 Summary")
+        ad4_success = [r for r in ad4_rows if r.get("Status") == "Success"]
+        st.write(f"AD4 successes: {len(ad4_success)}/{len(ad4_rows)} ligands")
+        comp_df = pd.DataFrame(ad4_success)
+        display_cols = [
+            "Ligand",
+            "AD4_Affinity", "AD4_Intermolecular", "AD4_Internal", "AD4_Torsional",
+            "Binding_Affinity", "Num_Poses",
+        ]
+        available_cols = [c for c in display_cols if c in comp_df.columns]
+        if available_cols:
+            st.write("Energy Components:")
+            st.dataframe(comp_df[available_cols], use_container_width=True)
+    else:
+        st.subheader("Vina Summary")
+        try:
+            vina_affs = [
+                float(r["Binding_Affinity"])
+                for r in rows
+                if r.get("Binding_Affinity") not in ("", "N/A", None)
+            ]
+            if vina_affs:
+                st.write(f"Binding affinities range: {min(vina_affs):.1f} to {max(vina_affs):.1f} kcal/mol")
+                st.write(f"Average binding affinity: {sum(vina_affs)/len(vina_affs):.1f} kcal/mol")
+        except Exception:
+            pass
+
+    csv_bytes = _cached_file_bytes(results_to_csv_bytes(rows))
+    st.download_button(
+        "Download results CSV",
+        data=csv_bytes,
+        file_name="metallodock_results.csv",
+        mime="text/csv",
+        key=f"dl_csv_{widget_key_prefix}",
+    )
+    if results_out_dir and results_out_dir.exists():
+        all_zip = _cached_file_bytes(zip_outputs(results_out_dir))
+        st.download_button(
+            "Download all output PDBQTs (ZIP)",
+            data=all_zip,
+            file_name=f"{results_out_dir.name}.zip",
+            mime="application/zip",
+            key=f"dl_allzip_{widget_key_prefix}",
+        )
+
+
 # Test executables button
 st.subheader("Tools")
 run_btn = st.button("Run Docking", type="primary")
 
-rows: List[dict] = []
-ad4_rows: List[dict] = []
+_dock_rows_key = f"{state_prefix}_docking_rows"
+_dock_ad4_key = f"{state_prefix}_docking_ad4_rows"
+_dock_backend_key = f"{state_prefix}_docking_backend"
+_dock_out_key = f"{state_prefix}_docking_out_dir"
+
+rows: List[dict] = list(st.session_state.get(_dock_rows_key, []) or [])
+ad4_rows: List[dict] = list(st.session_state.get(_dock_ad4_key, []) or [])
 
 if run_btn:
     # Check executable based on page mode
@@ -3384,73 +3472,25 @@ if run_btn:
             )
         if backend == "AD4 (maps)":
             ad4_rows = rows
+        else:
+            ad4_rows = []
+        st.session_state[_dock_rows_key] = rows
+        st.session_state[_dock_ad4_key] = ad4_rows
+        st.session_state[_dock_backend_key] = backend
+        st.session_state[_dock_out_key] = str(out_dir)
+
+results_backend = st.session_state.get(_dock_backend_key, backend)
+_out_saved = st.session_state.get(_dock_out_key, "")
+results_out_dir = Path(_out_saved).resolve() if _out_saved else None
 
 if rows:
-    drop_cols = [c for c in rows[0].keys() if c.startswith("AD4_")]
-    df = pd.DataFrame(rows)
-    st.success("Docking complete.")
-    st.dataframe(df[[c for c in df.columns if c not in drop_cols]], use_container_width=True)
-
-    st.subheader("Result Files")
-    for idx, row in enumerate(rows):
-        ligand_name = row.get("Ligand", f"Ligand {idx+1}")
-        out_path = row.get("Output_File")
-        log_path = row.get("Log_File")
-        if out_path and Path(out_path).exists():
-            archive = io.BytesIO()
-            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
-                zf.write(out_path, arcname=Path(out_path).name)
-                if log_path and Path(log_path).exists():
-                    zf.write(log_path, arcname=Path(log_path).name)
-            archive.seek(0)
-            st.download_button(
-                label=f"Download {ligand_name} results (ZIP)",
-                data=archive.getvalue(),
-                file_name=f"{Path(out_path).stem}.zip",
-                key=f"dl_zip_{idx}"
-            )
-        else:
-            st.caption(f"No PDBQT/log available for {ligand_name}")
-
-    if backend == "AD4 (maps)" and ad4_rows:
-        st.subheader("AD4 Summary")
-        ad4_success = [r for r in ad4_rows if r.get("Status") == "Success"]
-        st.write(f"AD4 successes: {len(ad4_success)}/{len(ad4_rows)} ligands")
-        comp_df = pd.DataFrame(ad4_success)
-        display_cols = [
-            "Ligand",
-            "AD4_Affinity", "AD4_Intermolecular", "AD4_Internal", "AD4_Torsional",
-            "Binding_Affinity", "Num_Poses"
-        ]
-        available_cols = [c for c in display_cols if c in comp_df.columns]
-        if available_cols:
-            st.write("Energy Components:")
-            st.dataframe(comp_df[available_cols], use_container_width=True)
-    else:
-        st.subheader("Vina Summary")
-        try:
-            vina_affs = [float(r["Binding_Affinity"]) for r in rows if r.get("Binding_Affinity") not in ("", "N/A", None)]
-            if vina_affs:
-                st.write(f"Binding affinities range: {min(vina_affs):.1f} to {max(vina_affs):.1f} kcal/mol")
-                st.write(f"Average binding affinity: {sum(vina_affs)/len(vina_affs):.1f} kcal/mol")
-        except Exception:
-            pass
-
-    csv_bytes = _cached_file_bytes(results_to_csv_bytes(rows))
-    st.download_button(
-        "Download results CSV",
-        data=csv_bytes,
-        file_name="metallodock_results.csv",
-        mime="text/csv",
+    _render_docking_results_fragment(
+        rows,
+        ad4_rows,
+        str(results_backend),
+        results_out_dir,
+        state_prefix,
     )
-    if out_dir.exists():
-        all_zip = _cached_file_bytes(zip_outputs(out_dir))
-        st.download_button(
-            "Download all output PDBQTs (ZIP)",
-            data=all_zip,
-            file_name=f"{out_dir.name}.zip",
-            mime="application/zip",
-        )
 else:
     st.info("Run docking to see results.")
 
