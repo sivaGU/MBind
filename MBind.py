@@ -13,7 +13,7 @@ import subprocess
 import platform
 import stat
 from pathlib import Path
-from typing import List, Tuple, Optional, Set, Dict
+from typing import List, Tuple, Optional, Set, Dict, NamedTuple
 
 REPO_ROOT = Path(__file__).resolve().parent
 
@@ -1706,6 +1706,217 @@ def _ligand_struct_text_for_view(pose_path: Path) -> Optional[str]:
         return None
 
 
+class _PdbqtAtom(NamedTuple):
+    chain: str
+    resi: int
+    resn: str
+    atom_name: str
+    x: float
+    y: float
+    z: float
+    ad4: str
+
+
+_SOLVENT_RESN = {"HOH", "WAT", "SOL", "TIP", "TIP3", "HO4"}
+_METAL_RESN = {"ZN", "MG", "FE", "CU", "FE2", "MN", "NI", "CO", "CD"}
+_AROM_RESN = {"PHE", "TYR", "TRP", "HIS", "HID", "HIE", "HIP"}
+_POLAR_AD4 = {"O", "N", "NA", "OA", "OS", "SA", "S", "P", "F", "CL", "BR", "I"}
+
+
+def _parse_pdbqt_heavy_atoms(pdb_block: str) -> List[_PdbqtAtom]:
+    """Parse ATOM/HETATM records; skip hydrogens using AD4 type (leading H)."""
+    atoms: List[_PdbqtAtom] = []
+    for line in pdb_block.splitlines():
+        if not line.startswith(("ATOM", "HETATM")) or len(line) < 54:
+            continue
+        try:
+            x = float(line[30:38])
+            y = float(line[38:46])
+            z = float(line[46:54])
+        except ValueError:
+            continue
+        atom_name = line[12:16].strip()
+        resn = line[17:20].strip()
+        chain = line[21:22].strip() if len(line) > 21 else ""
+        if not chain:
+            chain = "A"
+        resi_s = line[22:26].strip()
+        try:
+            resi = int(resi_s)
+        except ValueError:
+            continue
+        parts = line.split()
+        ad4 = (parts[-1] if parts else "").strip()
+        if ad4 and ad4[0] == "H":
+            continue
+        atoms.append(_PdbqtAtom(chain, resi, resn, atom_name, x, y, z, ad4))
+    return atoms
+
+
+def _is_metal_ion_atom(a: _PdbqtAtom) -> bool:
+    if a.resn.upper() in _METAL_RESN:
+        return True
+    t = a.ad4.upper()
+    return t in {"ZN", "MG", "FE", "CU", "MN", "NI", "CO", "CD"}
+
+
+def _dist(a: _PdbqtAtom, b: _PdbqtAtom) -> float:
+    return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2)
+
+
+def _closest_protein_residues(
+    rec_atoms: List[_PdbqtAtom],
+    lig_atoms: List[_PdbqtAtom],
+    n: int = 3,
+) -> List[Tuple[str, int]]:
+    """Return up to n (chain, resi) with smallest heavy-atom distance to the ligand."""
+    if not lig_atoms:
+        return []
+    best: Dict[Tuple[str, int], float] = {}
+    for ra in rec_atoms:
+        ru = ra.resn.upper()
+        if ru in _SOLVENT_RESN or ru in _METAL_RESN:
+            continue
+        d_min = min(_dist(ra, la) for la in lig_atoms)
+        key = (ra.chain, ra.resi)
+        if key not in best or d_min < best[key]:
+            best[key] = d_min
+    ranked = sorted(best.items(), key=lambda kv: kv[1])
+    return [k for k, _ in ranked[:n]]
+
+
+def _best_contact_pair(
+    rec_atoms: List[_PdbqtAtom],
+    lig_atoms: List[_PdbqtAtom],
+    chain: str,
+    resi: int,
+) -> Optional[Tuple[_PdbqtAtom, _PdbqtAtom, float]]:
+    r_atoms = [a for a in rec_atoms if a.chain == chain and a.resi == resi]
+    if not r_atoms or not lig_atoms:
+        return None
+    best: Optional[Tuple[_PdbqtAtom, _PdbqtAtom, float]] = None
+    for ra in r_atoms:
+        for la in lig_atoms:
+            d = _dist(ra, la)
+            if best is None or d < best[2]:
+                best = (ra, la, d)
+    return best
+
+
+def _interaction_line_color(ra: _PdbqtAtom, la: _PdbqtAtom, d: float) -> str:
+    """Teal (polar), green (aromatic C–C), or slate for other close contacts."""
+    ta = ra.ad4.upper()
+    tl = la.ad4.upper()
+    if ta in _POLAR_AD4 or tl in _POLAR_AD4:
+        return "0x2a9d9d"
+    if (
+        d < 4.8
+        and ta in {"A", "C"}
+        and tl in {"A", "C"}
+        and (ra.resn.upper() in _AROM_RESN or la.resn.upper() in _AROM_RESN)
+    ):
+        return "0x3d8f3d"
+    return "0x7a8fa3"
+
+
+def _add_dashed_line(
+    view,
+    a: _PdbqtAtom,
+    b: _PdbqtAtom,
+    color: str,
+    dash_len: float = 0.45,
+    gap_len: float = 0.12,
+    radius: float = 0.05,
+) -> None:
+    """Dashed interaction guides as 3D cylinders; addLine linewidth is ignored in WebGL."""
+    dx = b.x - a.x
+    dy = b.y - a.y
+    dz = b.z - a.z
+    dist = math.sqrt(dx * dx + dy * dy + dz * dz)
+    if dist < 1e-6:
+        return
+    ux, uy, uz = dx / dist, dy / dist, dz / dist
+    pos = 0.0
+    min_seg = 0.08
+    while pos < dist:
+        seg_end = min(pos + dash_len, dist)
+        if seg_end - pos >= min_seg:
+            view.addCylinder(
+                {
+                    "start": {
+                        "x": a.x + ux * pos,
+                        "y": a.y + uy * pos,
+                        "z": a.z + uz * pos,
+                    },
+                    "end": {
+                        "x": a.x + ux * seg_end,
+                        "y": a.y + uy * seg_end,
+                        "z": a.z + uz * seg_end,
+                    },
+                    "radius": radius,
+                    "color": color,
+                    "fromCap": True,
+                    "toCap": True,
+                }
+            )
+        pos = seg_end + gap_len
+
+
+def _apply_closest_residue_sticks_and_lines(
+    view,
+    rec_atoms: List[_PdbqtAtom],
+    lig_atoms: List[_PdbqtAtom],
+    model_rec: int = 0,
+    n_residues: int = 3,
+    contact_max_dist: float = 4.6,
+) -> None:
+    """Stick style for closest residues + dashed ligand–residue lines; metal coordination in purple."""
+    closest = _closest_protein_residues(rec_atoms, lig_atoms, n=n_residues)
+    for chain, resi in closest:
+        view.setStyle(
+            {"model": model_rec, "chain": chain, "resi": resi},
+            {
+                "stick": {
+                    "radius": 0.13,
+                    "colorscheme": "cyanCarbon",
+                }
+            },
+        )
+    for chain, resi in closest:
+        pair = _best_contact_pair(rec_atoms, lig_atoms, chain, resi)
+        if pair is None:
+            continue
+        ra, la, d = pair
+        if d > contact_max_dist:
+            continue
+        _add_dashed_line(view, ra, la, _interaction_line_color(ra, la, d))
+
+    metals = [a for a in rec_atoms if _is_metal_ion_atom(a)]
+    if not metals or not lig_atoms:
+        return
+    for m in metals:
+        to_lig = sorted((_dist(m, la), la) for la in lig_atoms)
+        for d, la in to_lig[:4]:
+            if d < 3.75:
+                _add_dashed_line(view, m, la, "0x9b4dca")
+        nbrs: List[Tuple[float, _PdbqtAtom]] = []
+        for ra in rec_atoms:
+            if ra is m or _is_metal_ion_atom(ra):
+                continue
+            ru = ra.resn.upper()
+            if ru in _SOLVENT_RESN or ru in _METAL_RESN:
+                continue
+            t = ra.ad4.upper()
+            if t not in _POLAR_AD4 and not ra.atom_name.upper().startswith(("O", "N")):
+                continue
+            dd = _dist(m, ra)
+            if dd < 3.15:
+                nbrs.append((dd, ra))
+        nbrs.sort(key=lambda x: x[0])
+        for _, ra in nbrs[:5]:
+            _add_dashed_line(view, m, ra, "0x9b4dca")
+
+
 def _pick_top_pose_row(rows: List[dict]) -> Optional[dict]:
     """Choose the row with best (lowest) binding affinity among rows with an existing output PDBQT."""
     scored: List[Tuple[float, dict]] = []
@@ -1728,13 +1939,41 @@ def _pick_top_pose_row(rows: List[dict]) -> Optional[dict]:
     return fallback[0] if fallback else None
 
 
+def _style_receptor_metal_ions(view, model_index: int = 0) -> None:
+    """Draw Mg/Zn/Fe/Cu as spheres so they stay visible over cartoon."""
+    r = 1.12
+    # By element (usual case when 3Dmol infers elem from ATOM/HETATM names)
+    for elem, color in (
+        ("Zn", "0xc0c0c0"),
+        ("Mg", "0x66c2ff"),
+        ("Fe", "0xff7a2e"),
+        ("Cu", "0xd4a574"),
+    ):
+        view.setStyle(
+            {"model": model_index, "elem": elem},
+            {"sphere": {"radius": r, "color": color}},
+        )
+    # Residue-name fallback (some PDBQT ions parse with odd elem typing)
+    for resn, color in (
+        ("ZN", "0xc0c0c0"),
+        ("MG", "0x66c2ff"),
+        ("FE", "0xff7a2e"),
+        ("FE2", "0xff7a2e"),
+        ("CU", "0xd4a574"),
+    ):
+        view.setStyle(
+            {"model": model_index, "resn": resn},
+            {"sphere": {"radius": r, "color": color}},
+        )
+
+
 def _binding_complex_view_html(
     receptor_path: Path,
     pose_path: Path,
     width: int = 720,
     height: int = 520,
 ) -> Optional[str]:
-    """Build HTML for py3Dmol view: receptor cartoon + top pose sticks."""
+    """Build HTML for py3Dmol: receptor cartoon, metal spheres, closest-residue sticks, dashed contacts."""
     if not HAS_PY3DMOL or py3Dmol is None:
         return None
     try:
@@ -1744,9 +1983,16 @@ def _binding_complex_view_html(
         lig_text = _ligand_struct_text_for_view(pose_path)
         if not lig_text or not lig_text.strip():
             return None
+        rec_atoms = _parse_pdbqt_heavy_atoms(rec_text)
+        lig_atoms = _parse_pdbqt_heavy_atoms(lig_text)
         view = py3Dmol.view(width=width, height=height)
         view.addModel(rec_text, "pdb")
-        view.setStyle({"model": 0}, {"cartoon": {"color": "spectrum"}})
+        # Solid receptor color (theme steel blue) — distinct from greenCarbon ligand sticks
+        rec_hex = MEDIUM_STEEL_BLUE.lstrip("#").lower()
+        view.setStyle({"model": 0}, {"cartoon": {"color": f"0x{rec_hex}"}})
+        _style_receptor_metal_ions(view, model_index=0)
+        if rec_atoms and lig_atoms:
+            _apply_closest_residue_sticks_and_lines(view, rec_atoms, lig_atoms, model_rec=0)
         view.addModel(lig_text, "pdb")
         view.setStyle(
             {"model": 1},
@@ -3393,7 +3639,12 @@ def _render_docking_results_fragment(
             html = _binding_complex_view_html(rp, pose_p)
             if html:
                 st_components.html(html, height=540, scrolling=False)
-                st.caption("Receptor: cartoon (spectrum). Docked pose: sticks (green carbon).")
+                st.caption(
+                    "Receptor: steel-blue cartoon; Mg/Zn/Fe/Cu as spheres; "
+                    "3 closest protein residues as cyan-carbon sticks; dashed lines: teal (polar), "
+                    "green (aromatic C–C), purple (metal–ligand / coordination). "
+                    "Ligand: green-carbon sticks."
+                )
             else:
                 st.warning("Could not render the complex. Try opening the PDBQT files in an external viewer.")
 
