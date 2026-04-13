@@ -45,6 +45,14 @@ LIGHT_POWDER_BLUE = "#6B9FC0"     # Darker Light Powder Blue
 SOFT_SKY_BLUE = "#4A7FA8"         # Darker Soft Sky Blue
 LIGHT_AZURE = "#2D6B94"           # Darker Light Azure
 MEDIUM_STEEL_BLUE = "#1C5C8F"     # Darker Medium Steel Blue
+# py3Dmol complex viewer: tan receptor + harmonizing pocket residue sticks
+RECEPTOR_CARTOON_TAN = "#D2B48C"
+RECEPTOR_POCKET_STICK_ELEM = {
+    "C": "d2b48c",
+    "N": "c9a77a",
+    "O": "b8956a",
+    "S": "e0c9a8",
+}
 DEEP_CERULEAN = "#0D4F7A"         # Darker Deep Cerulean
 RICH_TEAL_BLUE = "#004566"        # Darker Rich Teal Blue
 MIDNIGHT_AZURE = "#003A5F"        # Darker Midnight Azure
@@ -1869,17 +1877,30 @@ def _apply_closest_residue_sticks_and_lines(
     model_rec: int = 0,
     n_residues: int = 3,
     contact_max_dist: float = 4.6,
+    receptor_tan_hex: str = RECEPTOR_CARTOON_TAN.lstrip("#").lower(),
 ) -> None:
-    """Stick style for closest residues + dashed ligand–residue lines; metal coordination in purple."""
+    """Tan sticks for closest residues + dashed ligand–residue lines; metal coordination in purple.
+
+    Cartoon + stick on the same residues (cartoon partly transparent) keeps the side chain
+    visually tied to the receptor tube."""
+    tan_hex = receptor_tan_hex.lstrip("#").lower()
+    elem_map = {
+        el: f"0x{hx}"
+        for el, hx in RECEPTOR_POCKET_STICK_ELEM.items()
+    }
     closest = _closest_protein_residues(rec_atoms, lig_atoms, n=n_residues)
     for chain, resi in closest:
         view.setStyle(
             {"model": model_rec, "chain": chain, "resi": resi},
             {
+                "cartoon": {
+                    "color": f"0x{tan_hex}",
+                    "opacity": 0.42,
+                },
                 "stick": {
-                    "radius": 0.13,
-                    "colorscheme": "cyanCarbon",
-                }
+                    "radius": 0.14,
+                    "colorscheme": {"prop": "elem", "map": elem_map},
+                },
             },
         )
     for chain, resi in closest:
@@ -1987,12 +2008,14 @@ def _binding_complex_view_html(
         lig_atoms = _parse_pdbqt_heavy_atoms(lig_text)
         view = py3Dmol.view(width=width, height=height)
         view.addModel(rec_text, "pdb")
-        # Solid receptor color (theme steel blue) — distinct from greenCarbon ligand sticks
-        rec_hex = MEDIUM_STEEL_BLUE.lstrip("#").lower()
+        # Tan receptor cartoon — distinct from greenCarbon ligand sticks
+        rec_hex = RECEPTOR_CARTOON_TAN.lstrip("#").lower()
         view.setStyle({"model": 0}, {"cartoon": {"color": f"0x{rec_hex}"}})
         _style_receptor_metal_ions(view, model_index=0)
         if rec_atoms and lig_atoms:
-            _apply_closest_residue_sticks_and_lines(view, rec_atoms, lig_atoms, model_rec=0)
+            _apply_closest_residue_sticks_and_lines(
+                view, rec_atoms, lig_atoms, model_rec=0, receptor_tan_hex=rec_hex
+            )
         view.addModel(lig_text, "pdb")
         view.setStyle(
             {"model": 1},
