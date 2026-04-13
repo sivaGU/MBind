@@ -53,6 +53,13 @@ RECEPTOR_POCKET_STICK_ELEM = {
     "O": "b8956a",
     "S": "e0c9a8",
 }
+# Metal spheres in 3D viewer: cool hues so they pop against tan receptor cartoon
+METAL_SPHERE_HEX = {
+    "Zn": "0xb0bec5",  # cool blue-gray (was warm gray)
+    "Mg": "0x43a047",  # green
+    "Fe": "0xc62828",  # deep red (was orange, easy to confuse with tan)
+    "Cu": "0x1565c0",  # strong blue (was bronze/tan-like)
+}
 DEEP_CERULEAN = "#0D4F7A"         # Darker Deep Cerulean
 RICH_TEAL_BLUE = "#004566"        # Darker Rich Teal Blue
 MIDNIGHT_AZURE = "#003A5F"        # Darker Midnight Azure
@@ -1961,26 +1968,23 @@ def _pick_top_pose_row(rows: List[dict]) -> Optional[dict]:
 
 
 def _style_receptor_metal_ions(view, model_index: int = 0) -> None:
-    """Draw Mg/Zn/Fe/Cu as spheres so they stay visible over cartoon."""
+    """Draw Mg/Zn/Fe/Cu as spheres; colors chosen for contrast vs tan receptor cartoon."""
     r = 1.12
     # By element (usual case when 3Dmol infers elem from ATOM/HETATM names)
-    for elem, color in (
-        ("Zn", "0xc0c0c0"),
-        ("Mg", "0x66c2ff"),
-        ("Fe", "0xff7a2e"),
-        ("Cu", "0xd4a574"),
-    ):
+    for elem in ("Zn", "Mg", "Fe", "Cu"):
+        color = METAL_SPHERE_HEX[elem]
         view.setStyle(
             {"model": model_index, "elem": elem},
             {"sphere": {"radius": r, "color": color}},
         )
     # Residue-name fallback (some PDBQT ions parse with odd elem typing)
+    fe_c = METAL_SPHERE_HEX["Fe"]
     for resn, color in (
-        ("ZN", "0xc0c0c0"),
-        ("MG", "0x66c2ff"),
-        ("FE", "0xff7a2e"),
-        ("FE2", "0xff7a2e"),
-        ("CU", "0xd4a574"),
+        ("ZN", METAL_SPHERE_HEX["Zn"]),
+        ("MG", METAL_SPHERE_HEX["Mg"]),
+        ("FE", fe_c),
+        ("FE2", fe_c),
+        ("CU", METAL_SPHERE_HEX["Cu"]),
     ):
         view.setStyle(
             {"model": model_index, "resn": resn},
