@@ -3639,12 +3639,6 @@ def _render_docking_results_fragment(
             html = _binding_complex_view_html(rp, pose_p)
             if html:
                 st_components.html(html, height=540, scrolling=False)
-                st.caption(
-                    "Receptor: steel-blue cartoon; Mg/Zn/Fe/Cu as spheres; "
-                    "3 closest protein residues as cyan-carbon sticks; dashed lines: teal (polar), "
-                    "green (aromatic C–C), purple (metal–ligand / coordination). "
-                    "Ligand: green-carbon sticks."
-                )
             else:
                 st.warning("Could not render the complex. Try opening the PDBQT files in an external viewer.")
 
