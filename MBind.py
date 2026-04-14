@@ -1886,7 +1886,7 @@ def _apply_closest_residue_sticks_and_lines(
     contact_max_dist: float = 4.6,
     receptor_tan_hex: str = RECEPTOR_CARTOON_TAN.lstrip("#").lower(),
 ) -> None:
-    """Tan sticks for closest residues + dashed ligand–residue lines; metal coordination in purple.
+    """Tan sticks for closest residues + dashed ligand–residue lines; purple dashes metal–ligand only.
 
     Cartoon + stick on the same residues (cartoon partly transparent) keeps the side chain
     visually tied to the receptor tube."""
@@ -1927,22 +1927,6 @@ def _apply_closest_residue_sticks_and_lines(
         for d, la in to_lig[:4]:
             if d < 3.75:
                 _add_dashed_line(view, m, la, "0x9b4dca")
-        nbrs: List[Tuple[float, _PdbqtAtom]] = []
-        for ra in rec_atoms:
-            if ra is m or _is_metal_ion_atom(ra):
-                continue
-            ru = ra.resn.upper()
-            if ru in _SOLVENT_RESN or ru in _METAL_RESN:
-                continue
-            t = ra.ad4.upper()
-            if t not in _POLAR_AD4 and not ra.atom_name.upper().startswith(("O", "N")):
-                continue
-            dd = _dist(m, ra)
-            if dd < 3.15:
-                nbrs.append((dd, ra))
-        nbrs.sort(key=lambda x: x[0])
-        for _, ra in nbrs[:5]:
-            _add_dashed_line(view, m, ra, "0x9b4dca")
 
 
 def _pick_top_pose_row(rows: List[dict]) -> Optional[dict]:
