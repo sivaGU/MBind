@@ -173,14 +173,14 @@ def render_gnina_documentation_page():
         "- **CNN scoring** for improved binding affinity predictions\n"
         "- **CNN refinement** to optimize docked poses\n"
         "- **Flexible input formats** (PDB, PDBQT, MOL2, SDF)\n"
-        f"- **Zn{SUP2}-aware docking** support for metalloproteins"
+        f"- **Metalloprotein-aware docking** support for Zn{SUP2}, Cu{SUP2}, Fe{SUP2}, and Mg{SUP2} systems"
     )
 
     st.subheader("1. File Preparation")
     st.markdown(
         "**Receptors:**\n"
         "- **Format**: PDB or PDBQT files\n"
-        f"- **Provided Zn{SUP2} metalloprotein receptors**: You can use the pre-configured receptors (folder name on disk may still read `Zinc Metal Protein Receptors`):\n"
+        f"- **Provided demo metalloprotein receptors**: You can use the pre-configured benchmark receptors (folder name on disk may still read `Zinc Metal Protein Receptors`):\n"
         "  - `(DEMO) Zinc Metal Protein Receptors/hACE.pdbqt`\n"
         "  - `(DEMO) Zinc Metal Protein Receptors/HDAC2.pdbqt`\n"
         "  - `(DEMO) Zinc Metal Protein Receptors/HDAC8_with_Hydroxamic_Acid.pdbqt`\n"
@@ -201,7 +201,7 @@ def render_gnina_documentation_page():
     st.markdown(
         "**Grid Box Center (x, y, z)**:\n"
         "- The center coordinates of the search space in Angstroms\n"
-        f"- For CA receptors, typical centers are around the Zn{SUP2} binding site\n"
+        f"- For metalloproteins, place the center near the metal-coordination region (Zn{SUP2}, Cu{SUP2}, Fe{SUP2}, or Mg{SUP2})\n"
         "- You can manually enter coordinates or use the metal center detection\n\n"
         "**Grid Box Size**:\n"
         "- The dimensions of the search space (width, height, depth) in Angstroms\n"
@@ -281,9 +281,9 @@ def render_gnina_documentation_page():
 
     st.subheader("Tips & Best Practices")
     st.markdown(
-        f"**For Zn{SUP2} metalloprotein docking**:\n"
-        f"- Use the provided Zn{SUP2} metalloprotein receptors for consistency\n"
-        f"- Grid center should be near the Zn{SUP2} binding site\n"
+        f"**For Metalloprotein Docking (Zn{SUP2}/Cu{SUP2}/Fe{SUP2}/Mg{SUP2})**:\n"
+        "- Keep the receptor metal ions and coordinating residues in the uploaded structure\n"
+        "- Center the grid on the metal coordination environment\n"
         "- Typical grid size: 20-25 Angstrom\n\n"
         "**For General Metalloprotein Docking**:\n"
         f"- Ensure receptor includes metal ions (Zn{SUP2}, Mg{SUP2}, Fe{SUP2}, etc.)\n"
@@ -315,7 +315,7 @@ def render_gnina_documentation_page():
     )
 
     st.info(
-        f"**Quick Start**: Upload a CA receptor and ligand, set grid box center to the Zn{SUP2} site, "
+        f"**Quick Start**: Upload a metalloprotein receptor and ligand, center the grid near the Zn{SUP2}/Cu{SUP2}/Fe{SUP2}/Mg{SUP2} binding region, "
         "use default parameters, and click Run Docking. Check the GNINA ML Docking tab for the interface."
     )
 
@@ -371,13 +371,13 @@ def render_documentation_page():
         "MBind wraps AutoGrid4 to create or update map files. The workflow validates inputs before launching the executable:\\n"
         "1. Confirms `autogrid4` exists and has execute permissions.\\n"
         "2. Merges `AD4_parameters.dat` with optional `AD4Zn.dat`.\\n"
-        f"3. Runs `zinc_pseudo.py` (if present) to insert tetrahedral Zn{SUP2} pseudoatoms.\\n"
+        "3. Runs the matching pseudo-atom script (if present) for the selected metalloprotein workflow.\\n"
         "4. Normalizes receptor oxygen labels to OA.\\n"
         "5. Detects receptor & ligand atom types and unions them with forced types.\\n"
         "6. Builds the grid parameter file (GPF) and executes AutoGrid4."
     )
     st.warning(
-        "Spacing must be greater than 0 Angstrom. The Demo tab locks spacing at 0.375 Angstrom to mimic published CA binding boxes."
+        "Spacing must be greater than 0 Angstrom. The Demo tab locks spacing at 0.375 Angstrom to align with the bundled benchmark presets."
     )
 
     st.subheader("5. Run Docking")
@@ -2045,30 +2045,6 @@ def parse_ad4_verbose_output(stdout: str) -> dict:
 def _endogenous_presets() -> dict:
     root = Path("C:/Users/madas/Downloads/Protocols for Docking")
     return {
-        "CA": {
-            "receptor": root / "Receptor Files/Carbonic Anhydrase I/Carbonic_Anhydrase_Post_Processed.pdbqt",
-            "lig_dir": root / "Endogenous Ligands/CA I",
-            "center": (29.951, 0.420, -4.735),
-            "size": (16.0, 18.0, 16.0),
-        },
-        "CA_CUSTOM": {
-            "receptor": root / "Receptor Files/Carbonic Anhydrase I/Carbonic_Anhydrase_Post_Processed.pdbqt",
-            "lig_dir": root / "ligands_no_hydrogens",
-            "center": (29.951, 0.420, -4.735),
-            "size": (16.0, 18.0, 16.0),
-        },
-        "CAI_PFAS": {
-            "receptor": root / "Receptor Files/Carbonic Anhydrase I/Carbonic_Anhydrase_Post_Processed.pdbqt",
-            "lig_dir": root / "18 PFAS",
-            "center": (29.951, 0.420, -4.735),
-            "size": (16.0, 18.0, 16.0),
-        },
-        "CAII_PFAS": {
-            "receptor": root / "Receptor Files/Carbonic Anhydrase II/CA_2_pp.pdbqt",
-            "lig_dir": root / "18 PFAS",
-            "center": (-6.421, 0.342, 17.256),
-            "size": (21.0, 21.0, 21.0),
-        },
         "SOD1": {
             "receptor": root / "Receptor Files/SOD1 Receptor + Gridbox/5YTU_Cleaned.pdbqt",
             "lig_dir": root / "Endogenous Ligands/SOD1 Ligand",
@@ -2297,7 +2273,7 @@ def _run_cli():
     parser = argparse.ArgumentParser(description="MBind CLI (uses GUI code paths)")
     parser.add_argument("--cli", action="store_true", help="Run in CLI mode and skip Streamlit UI")
     parser.add_argument("--preset", type=str, default=None,
-                        help="One of: CA, SOD1, HDAC1, HDAC2, HDAC3, HDAC4, HDAC6, or HDAC_ALL")
+                        help="One of: SOD1, HDAC1, HDAC2, HDAC3, HDAC4, HDAC6, or HDAC_ALL")
     parser.add_argument("--work-dir", type=str, default=None, help="Working directory for outputs and maps")
     parser.add_argument("--spacing", type=float, default=0.375, help="AD4 grid spacing (Angstrom)")
     parser.add_argument("--exhaustiveness", type=int, default=64, help="Base exhaustiveness")
@@ -2803,12 +2779,12 @@ if page == PAGE_FEMGCU_METALLO_DOCKING:
         f"Dock with backend **AD4 (maps)** the same way as **{PAGE_ZN_METALLO_DOCKING}**."
     )
 
-# GNINA-specific info about using provided Zn²⁺ metalloprotein receptors/ligands or own files
+# GNINA-specific info about using provided demo receptors/ligands or own files
 if page_mode == "gnina":
     st.info(
         "**📁 Using Provided Files or Your Own:**\n\n"
-        f"- **Provided Zn{SUP2} metalloprotein receptors**: You can use the pre-configured receptors from the "
-        "`(DEMO) Zinc Metal Protein Receptors` folder (hACE.pdbqt, HDAC2.pdbqt, HDAC8_with_Hydroxamic_Acid.pdbqt, HDAC8_with_SAHA.pdbqt, HDAC10.pdbqt, Human_Neutral_Endopeptidase.pdbqt, Leukotriene.pdbqt, ADAMTS-5.pdbqt).\n\n"
+        f"- **Provided demo metalloprotein receptors**: You can use the pre-configured receptors from the "
+        "`(DEMO) Zinc Metal Protein Receptors` folder (the bundled benchmark panel is Zn-focused, but GNINA supports Zn/Cu/Fe/Mg receptors you upload).\n\n"
         "- **Provided Ligands**: You can use the sample ligands from the `(DEMO) Ligands` folder (8 endogenous ligands).\n\n"
         "- **Your Own Files**: You can also upload your own receptor (PDB/PDBQT) and ligand files (MOL2/SDF/PDBQT/PDB).\n\n"
         "Simply upload the files you want to use in the sections below, or navigate to the **GNINA Documentation** tab "

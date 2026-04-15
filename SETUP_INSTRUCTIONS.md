@@ -1,7 +1,7 @@
 # MBind Setup Instructions
 
 ## Overview
-MBind is a Streamlit-based GUI for AutoDock Vina and AutoDock4 (AD4) metalloprotein docking. The Demo tab is configured for 8 Zn²⁺ metalloproteins.
+MBind is a Streamlit-based GUI for AutoDock Vina, AutoGrid4, AutoDock4, and optional GNINA workflows. It supports metalloprotein docking across Zn²⁺, Cu²⁺, Fe²⁺, and Mg²⁺ targets, plus standard docking.
 
 ## Quick Start
 
@@ -13,7 +13,7 @@ pip install -r requirements.txt
 ### 2. Setup Demo Files (Optional)
 For the Demo tab to work, you need to populate two folders:
 
-- **`(DEMO) Zinc Metal Protein Receptors/`**: Place 8 receptor PDBQT files:
+- **`(DEMO) Zinc Metal Protein Receptors/`**: Place 8 receptor PDBQT files (bundled demo panel):
   - hACE.pdbqt
   - HDAC2.pdbqt
   - HDAC8_with_Hydroxamic_Acid.pdbqt
@@ -67,15 +67,17 @@ MBind/
 
 ## Features
 
-- **Demo Tab**: Pre-configured for 8 Zinc Metal Proteins with locked grid box parameters
+- **Demo Tab**: Pre-configured Zn-focused benchmark panel with locked grid box parameters
 - **Standard AutoDock Tab**: Vina-focused workflow with user-defined grid boxes
-- **Zn²⁺ Metalloprotein Docking tab**: AD4 workflow with full control over grid/map settings  
+- **Zn²⁺ Metalloprotein Docking tab**: AD4 workflow with full control over Zn map settings
 - **Fe²⁺/Mg²⁺/Cu²⁺ Metalloprotein Docking tab**: AD4 maps for Fe²⁺, Mg²⁺, or Cu²⁺ using bundled pseudo scripts and merged `.dat` files
+- **GNINA ML Docking tab**: Optional ML-assisted docking workflow for metalloprotein and standard targets
 
 ## Notes
 
 - The Demo tab requires the demo receptor and ligand folders to be populated
-- Grid box coordinates are automatically set when selecting a zinc metal protein in the Demo tab
+- Grid box coordinates are automatically set when selecting a demo receptor in the Demo tab
+- The demo receptor set is Zn-focused, while Cu/Fe/Mg runs use the dedicated metalloprotein tabs with user-provided receptors
 - All executables are included in `Files_for_GUI/` for Windows (Linux/Mac users need to compile or install equivalent binaries)
 
 ## Contact
