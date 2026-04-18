@@ -45,13 +45,23 @@ LIGHT_POWDER_BLUE = "#6B9FC0"     # Darker Light Powder Blue
 SOFT_SKY_BLUE = "#4A7FA8"         # Darker Soft Sky Blue
 LIGHT_AZURE = "#2D6B94"           # Darker Light Azure
 MEDIUM_STEEL_BLUE = "#1C5C8F"     # Darker Medium Steel Blue
-# py3Dmol complex viewer: tan receptor + harmonizing pocket residue sticks
+# py3Dmol complex viewer: tan receptor + harmonizing pocket residue sticks (default)
 RECEPTOR_CARTOON_TAN = "#D2B48C"
 RECEPTOR_POCKET_STICK_ELEM = {
     "C": "d2b48c",
     "N": "c9a77a",
     "O": "b8956a",
     "S": "e0c9a8",
+}
+# Post-docking viewer: white receptor on dark canvas so the ligand reads as the focus
+RECEPTOR_VIZ_BG_HEX = "1a1f26"
+RECEPTOR_VIZ_CARTOON_HEX = "ffffff"
+RECEPTOR_VIZ_POCKET_CARTOON_HEX = "d8dce3"
+RECEPTOR_VIZ_POCKET_STICK_ELEM = {
+    "C": "b0b8c4",
+    "N": "8fa0b8",
+    "O": "b89890",
+    "S": "b8b0a0",
 }
 # Metal spheres in 3D viewer: cool hues so they pop against tan receptor cartoon
 METAL_SPHERE_HEX = {
@@ -1888,27 +1898,31 @@ def _apply_closest_residue_sticks_and_lines(
     n_residues: int = 3,
     contact_max_dist: float = 4.6,
     receptor_tan_hex: str = RECEPTOR_CARTOON_TAN.lstrip("#").lower(),
+    light_receptor: bool = False,
 ) -> None:
-    """Tan sticks for closest residues + dashed ligand–residue lines; purple dashes metal–ligand only.
+    """Tan (or light) sticks for closest residues + dashed ligand–residue lines; purple dashes metal–ligand only.
 
     Cartoon + stick on the same residues (cartoon partly transparent) keeps the side chain
-    visually tied to the receptor tube."""
+    visually tied to the receptor tube. When ``light_receptor`` is True, pocket styling uses muted
+    grays so a white receptor cartoon stays secondary to the ligand."""
     tan_hex = receptor_tan_hex.lstrip("#").lower()
-    elem_map = {
-        el: f"0x{hx}"
-        for el, hx in RECEPTOR_POCKET_STICK_ELEM.items()
-    }
+    pocket_cartoon_hex = (
+        RECEPTOR_VIZ_POCKET_CARTOON_HEX if light_receptor else tan_hex
+    )
+    stick_src = RECEPTOR_VIZ_POCKET_STICK_ELEM if light_receptor else RECEPTOR_POCKET_STICK_ELEM
+    elem_map = {el: f"0x{hx}" for el, hx in stick_src.items()}
     closest = _closest_protein_residues(rec_atoms, lig_atoms, n=n_residues)
+    pocket_cartoon_opacity = 0.48 if light_receptor else 0.42
     for chain, resi in closest:
         view.setStyle(
             {"model": model_rec, "chain": chain, "resi": resi},
             {
                 "cartoon": {
-                    "color": f"0x{tan_hex}",
-                    "opacity": 0.42,
+                    "color": f"0x{pocket_cartoon_hex}",
+                    "opacity": pocket_cartoon_opacity,
                 },
                 "stick": {
-                    "radius": 0.14,
+                    "radius": 0.12 if light_receptor else 0.14,
                     "colorscheme": {"prop": "elem", "map": elem_map},
                 },
             },
@@ -1998,19 +2012,28 @@ def _binding_complex_view_html(
         rec_atoms = _parse_pdbqt_heavy_atoms(rec_text)
         lig_atoms = _parse_pdbqt_heavy_atoms(lig_text)
         view = py3Dmol.view(width=width, height=height)
+        view.setBackgroundColor(f"0x{RECEPTOR_VIZ_BG_HEX}")
         view.addModel(rec_text, "pdb")
-        # Tan receptor cartoon — distinct from greenCarbon ligand sticks
-        rec_hex = RECEPTOR_CARTOON_TAN.lstrip("#").lower()
-        view.setStyle({"model": 0}, {"cartoon": {"color": f"0x{rec_hex}"}})
+        # White receptor cartoon on dark background — ligand sticks read as the focal layer
+        rec_hex = RECEPTOR_VIZ_CARTOON_HEX
+        view.setStyle(
+            {"model": 0},
+            {"cartoon": {"color": f"0x{rec_hex}", "style": "oval"}},
+        )
         _style_receptor_metal_ions(view, model_index=0)
         if rec_atoms and lig_atoms:
             _apply_closest_residue_sticks_and_lines(
-                view, rec_atoms, lig_atoms, model_rec=0, receptor_tan_hex=rec_hex
+                view,
+                rec_atoms,
+                lig_atoms,
+                model_rec=0,
+                receptor_tan_hex=rec_hex,
+                light_receptor=True,
             )
         view.addModel(lig_text, "pdb")
         view.setStyle(
             {"model": 1},
-            {"stick": {"radius": 0.13, "colorscheme": "greenCarbon"}},
+            {"stick": {"radius": 0.17, "colorscheme": "greenCarbon"}},
         )
         view.zoomTo()
         return view._make_html()
@@ -3628,7 +3651,12 @@ def _render_docking_results_fragment(
             pose_p = Path(viz_options[choice_i][1]["Output_File"])
             html = _binding_complex_view_html(rp, pose_p)
             if html:
-                st_components.html(html, height=540, scrolling=False)
+                st_components.html(html, height=560, scrolling=False)
+                st.caption(
+                    "**Viewer controls:** drag with the **left** mouse button to rotate. "
+                    "Hold **Ctrl** and drag (or use the **middle** mouse button) to **pan** left/right and up/down. "
+                    "Use the **scroll wheel** to zoom."
+                )
             else:
                 st.warning("Could not render the complex. Try opening the PDBQT files in an external viewer.")
 
