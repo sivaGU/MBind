@@ -320,77 +320,80 @@ def render_gnina_documentation_page():
     )
 
 def render_documentation_page():
-    st.header("MBind - Documentation")
+    st.header("MBind — Documentation")
     st.write(
-        "Welcome to the documentation tab! Below is a detailed, step-by-step guide to the "
-        "MBind workflow so you know what each section does and how to use it effectively."
+        "This page walks through the MBind workflow: preparing your workspace, loading structures, "
+        "building maps, running docking, and interpreting outputs."
     )
 
-    st.subheader("1. Prepare Your Workspace")
+    st.subheader("1. Prepare your workspace")
     st.markdown(
-        "**1. Choose a working directory.**\\n"
-        "MBind creates `prepared_ligands/`, `ad4_maps/`, and `outputs/` inside the folder you set. "
-        "If you run on Streamlit Cloud, the directory defaults to `/mount/src/metallodock/`."
+        "**Choose a working directory.**\n\n"
+        "MBind creates `prepared_ligands/`, `ad4_maps/`, and `outputs/` under the folder you set. "
+        "On Streamlit Cloud, use the working directory shown in the app (or a path your deployment allows)."
     )
     st.markdown(
-        "**2. Review the navigation tabs.**\\n"
-        f"- *Demo*: AD4 workflow with Zn{SUP2} metalloprotein presets.\\n"
-        "- *Standard AutoDock*: Vina box docking.\\n"
-        f"- *{PAGE_ZN_METALLO_DOCKING}*: Manual AD4 configuration (Zn{SUP2}-style parameters).\\n"
-        f"- *{PAGE_FEMGCU_METALLO_DOCKING}*: AD4 maps for Fe{SUP2}, Cu{SUP2}, or Mg{SUP2} using bundled pseudo scripts and merged `.dat` files."
-    )
-
-    st.subheader("2. Provide Receptor & Ligands")
-    st.markdown(
-        "**1. Upload a receptor (PDBQT).**\\n"
-        "Use the uploader or a path. MBind normalizes oxygen labels (O to OA) and keeps coordinates intact."
-    )
-    st.markdown(
-        "**2. Prepare ligands.**\\n"
-        "- Supply a source folder and click *Prepare ligands* to convert to PDBQT.\\n"
-        "- Or switch to *Upload now* to drop ready-made PDBQT files. Prepared ligands live under `prepared_ligands/ligands_no_hydrogens`."
+        "**Review the navigation tabs.**\n\n"
+        f"- **Demo**: AD4 workflow with eight Zn{SUP2} metalloprotein presets and bundled benchmark paths.\n"
+        "- **Standard AutoDock**: AutoDock Vina box docking.\n"
+        f"- **{PAGE_ZN_METALLO_DOCKING}**: Full manual AD4 configuration with Zn{SUP2}-style parameters and maps.\n"
+        f"- **{PAGE_FEMGCU_METALLO_DOCKING}**: AD4 maps for Fe{SUP2}, Cu{SUP2}, or Mg{SUP2} using bundled pseudo scripts and merged `.dat` files.\n"
+        "- **GNINA ML Docking**: Optional GNINA (or SMINA) ML-assisted docking and scoring in the same app."
     )
 
-    st.subheader("3. Configure Grid & Backend")
+    st.subheader("2. Provide receptor and ligands")
     st.markdown(
-        "**1. Select the docking backend.**\\n"
-        "- *Vina (box)*: exhaustiveness-based sampling inside the defined box.\\n"
-        "- *AD4 (maps)*: requires AutoGrid maps and supports component energy breakdown."
+        "**Upload a receptor (PDBQT).**\n\n"
+        "Use the uploader or a file path. MBind normalizes oxygen labels (O → OA) while preserving coordinates."
     )
     st.markdown(
-        "**2. Set grid box parameters.**\\n"
-        "Enter center (x, y, z), size (Angstrom), and grid spacing. In the Demo tab these are locked to the preset you choose." 
-    )
-    st.markdown(
-        "**3. Force extra atom types (optional).**\\n"
-        "Add comma-separated atom symbols (e.g., `S,NA`) if your ligands contain uncommon types that need maps."
+        "**Prepare ligands.**\n\n"
+        "- Point to a source folder and click *Prepare ligands* to convert inputs to PDBQT.\n"
+        "- Or switch to *Upload now* and drop PDBQT files that are already prepared. "
+        "Prepared ligands are stored under `prepared_ligands/ligands_no_hydrogens/`."
     )
 
-    st.subheader("4. Generate AD4 Maps (when using AD4)")
+    st.subheader("3. Configure grid and backend")
     st.markdown(
-        "MBind wraps AutoGrid4 to create or update map files. The workflow validates inputs before launching the executable:\\n"
-        "1. Confirms `autogrid4` exists and has execute permissions.\\n"
-        "2. Merges `AD4_parameters.dat` with optional `AD4Zn.dat`.\\n"
-        "3. Runs the matching pseudo-atom script (if present) for the selected metalloprotein workflow.\\n"
-        "4. Normalizes receptor oxygen labels to OA.\\n"
-        "5. Detects receptor & ligand atom types and unions them with forced types.\\n"
-        "6. Builds the grid parameter file (GPF) and executes AutoGrid4."
+        "**Select the docking backend.**\n\n"
+        "- **Vina (box)**: Exhaustiveness-based search inside the defined box.\n"
+        "- **AD4 (maps)**: Requires AutoGrid maps; supports per-component energy breakdown."
+    )
+    st.markdown(
+        "**Set grid box parameters.**\n\n"
+        "Enter center (x, y, z), size (Å), and grid spacing. In the Demo tab, these follow the selected preset."
+    )
+    st.markdown(
+        "**Force extra atom types (optional).**\n\n"
+        "Add comma-separated symbols (e.g. `S,NA`) if your ligands contain atom types that need additional maps."
+    )
+
+    st.subheader("4. Generate AD4 maps (AD4 workflows only)")
+    st.markdown(
+        "MBind wraps AutoGrid4 to create or refresh map files. Before running, it:\n\n"
+        "1. Confirms `autogrid4` exists and is executable.\n"
+        "2. Merges `AD4_parameters.dat` with the metal-specific add-on for your workflow "
+        f"(e.g. `AD4Zn.dat` for Zn{SUP2}, or the corresponding Fe/Cu/Mg merged files for other tabs).\n"
+        "3. Runs the matching pseudo-atom script when present for the selected metalloprotein workflow.\n"
+        "4. Normalizes receptor oxygen labels to OA.\n"
+        "5. Detects receptor and ligand atom types and unions them with any forced types.\n"
+        "6. Writes the grid parameter file (GPF) and runs AutoGrid4."
     )
     st.warning(
-        "Spacing must be greater than 0 Angstrom. The Demo tab locks spacing at 0.375 Angstrom to align with the bundled benchmark presets."
+        "Grid spacing must be greater than 0 Å. The Demo tab uses 0.375 Å spacing to match the bundled benchmark presets."
     )
 
-    st.subheader("5. Run Docking")
+    st.subheader("5. Run docking")
     st.markdown(
-        "**1. Click *Run Docking*.**\\n"
-        "MBind queues each ligand, calls the appropriate executable (Vina or AD4), captures stdout/stderr, and displays live status." 
+        "**Start the run.**\n\n"
+        "Click *Run Docking*. MBind queues each ligand, invokes Vina or AD4, streams stdout/stderr, and shows live status."
     )
     st.markdown(
-        "**2. Understand the results table.**\\n"
-        "For every ligand you'll see binding affinity, pose counts, output/log paths, and status. AD4 runs also surface intermolecular, "
-        "internal, torsional, and estimated free-energy components." 
+        "**Read the results table.**\n\n"
+        "For each ligand you will see binding affinity, pose counts, paths to outputs and logs, and status. "
+        "AD4 runs also list intermolecular, internal, torsional, and estimated free-energy components."
     )
-    st.subheader("5a. Docking parameters reference")
+    st.subheader("6. Docking parameters reference")
     st.markdown(
         "The following parameters control how docking is run and what happens when a run fails or times out."
     )
@@ -434,7 +437,7 @@ def render_documentation_page():
     st.caption(
         "Retries apply only when a run fails or hits the per-ligand timeout. The same random seed is not reused across retries; each attempt uses a new random seed."
     )
-    st.subheader("6. Review & Export Outputs")
+    st.subheader("7. Review and export outputs")
     st.markdown(
         "After docking completes you can:"
         "- Download individual ligand PDBQT and log files."
@@ -445,15 +448,15 @@ def render_documentation_page():
         "Grid maps reside in `ad4_maps/<prefix>/` and are reused automatically if they already exist."
     )
 
-    st.subheader("Demo Tab Notes")
+    st.subheader("Demo tab notes")
     st.markdown(
-        f"The Demo tab is pre-populated for Zn{SUP2} metalloprotein receptors. Download the bundled folders (`Zinc Metal Protein Receptors` and "
-        f"`8 Endogenous Ligands`) from the repository so the tab can locate receptors and sample ligands. Switching between the 8 Zn{SUP2} metalloproteins "
-        "*II* locks grid centers, box sizes, spacing (0.375 Angstrom), and docking parameters accordingly."
+        f"The Demo tab is set up for eight Zn{SUP2} metalloprotein receptors. Clone or download the repository assets so paths resolve "
+        f"(for example `(DEMO) Zinc Metal Protein Receptors` for receptors and `(DEMO) Ligands` for the eight endogenous ligands). "
+        f"Each preset updates the grid center, box size, spacing (0.375 Å), and default docking parameters accordingly."
     )
 
     st.info(
-        "Tip: Use the *Tools - Test executables* button to confirm Vina, AutoGrid4, and AutoDock4 paths before starting long jobs."
+        "Tip: Use **Tools → Test executables** to verify Vina, AutoGrid4, and AutoDock4 before long jobs."
     )
 
 # ==============================
