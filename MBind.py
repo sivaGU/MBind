@@ -53,15 +53,20 @@ RECEPTOR_POCKET_STICK_ELEM = {
     "O": "b8956a",
     "S": "e0c9a8",
 }
-# Post-docking viewer: white receptor on dark canvas so the ligand reads as the focus
-RECEPTOR_VIZ_BG_HEX = "1a1f26"
+# Post-docking viewer: off-white canvas, white receptor + ambient-occlusion crevice shading, green ligand
+RECEPTOR_VIZ_BG_HEX = "f4f4f2"
 RECEPTOR_VIZ_CARTOON_HEX = "ffffff"
-RECEPTOR_VIZ_POCKET_CARTOON_HEX = "d8dce3"
+RECEPTOR_VIZ_POCKET_CARTOON_HEX = "ebeae8"
 RECEPTOR_VIZ_POCKET_STICK_ELEM = {
-    "C": "b0b8c4",
-    "N": "8fa0b8",
-    "O": "b89890",
-    "S": "b8b0a0",
+    "C": "a8b0bc",
+    "N": "8898a8",
+    "O": "a89088",
+    "S": "b0a898",
+}
+RECEPTOR_VIZ_AMBIENT_OCCLUSION = {
+    "style": "ambientOcclusion",
+    "strength": 1.35,
+    "radius": 6.0,
 }
 # Metal spheres in 3D viewer: cool hues so they pop against tan receptor cartoon
 METAL_SPHERE_HEX = {
@@ -2014,7 +2019,7 @@ def _binding_complex_view_html(
         view = py3Dmol.view(width=width, height=height)
         view.setBackgroundColor(f"0x{RECEPTOR_VIZ_BG_HEX}")
         view.addModel(rec_text, "pdb")
-        # White receptor cartoon on dark background — ligand sticks read as the focal layer
+        # White oval cartoon; crevice depth via 3Dmol ambient occlusion (matches light-background refs)
         rec_hex = RECEPTOR_VIZ_CARTOON_HEX
         view.setStyle(
             {"model": 0},
@@ -2036,6 +2041,7 @@ def _binding_complex_view_html(
             {"stick": {"radius": 0.17, "colorscheme": "greenCarbon"}},
         )
         view.zoomTo()
+        view.setViewStyle(RECEPTOR_VIZ_AMBIENT_OCCLUSION)
         return view._make_html()
     except Exception:
         return None
