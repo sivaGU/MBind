@@ -56,24 +56,25 @@ RECEPTOR_POCKET_STICK_ELEM = {
 # Post-docking viewer: off-white canvas, white receptor + ambient-occlusion crevice shading, green ligand
 RECEPTOR_VIZ_BG_HEX = "f4f4f2"
 RECEPTOR_VIZ_CARTOON_HEX = "ffffff"
-RECEPTOR_VIZ_POCKET_CARTOON_HEX = "ebeae8"
+RECEPTOR_VIZ_POCKET_CARTOON_HEX = "e5efff"
 RECEPTOR_VIZ_POCKET_STICK_ELEM = {
-    "C": "a8b0bc",
-    "N": "8898a8",
-    "O": "a89088",
-    "S": "b0a898",
+    "C": "7f95d9",
+    "N": "7ea8d8",
+    "O": "9abbe0",
+    "S": "b2c8e6",
 }
+RECEPTOR_VIZ_POCKET_CARBON_DOT_HEX = "5b78c7"
 RECEPTOR_VIZ_AMBIENT_OCCLUSION = {
     "style": "ambientOcclusion",
     "strength": 1.35,
     "radius": 6.0,
 }
-# Metal spheres in 3D viewer: cool hues so they pop against tan receptor cartoon
+# Metal spheres in 3D viewer: ChimeraX/PubChem-like element colors
 METAL_SPHERE_HEX = {
-    "Zn": "0xb0bec5",  # cool blue-gray (was warm gray)
-    "Mg": "0x43a047",  # green
-    "Fe": "0xc62828",  # deep red (was orange, easy to confuse with tan)
-    "Cu": "0x1565c0",  # strong blue (was bronze/tan-like)
+    "Zn": "0x7d80b0",  # zinc: slate-violet
+    "Mg": "0x8aff00",  # magnesium: bright green
+    "Fe": "0xe06633",  # iron: rust orange
+    "Cu": "0xb87333",  # copper: copper orange-brown
 }
 DEEP_CERULEAN = "#0D4F7A"         # Darker Deep Cerulean
 RICH_TEAL_BLUE = "#004566"        # Darker Rich Teal Blue
@@ -1932,6 +1933,12 @@ def _apply_closest_residue_sticks_and_lines(
                 },
             },
         )
+        if light_receptor:
+            # Add carbon-only dots on the selected closest residues so carbon atoms are visibly distinct.
+            view.setStyle(
+                {"model": model_rec, "chain": chain, "resi": resi, "elem": "C"},
+                {"sphere": {"radius": 0.19, "color": f"0x{RECEPTOR_VIZ_POCKET_CARBON_DOT_HEX}"}},
+            )
     for chain, resi in closest:
         pair = _best_contact_pair(rec_atoms, lig_atoms, chain, resi)
         if pair is None:
