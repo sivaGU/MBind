@@ -1920,6 +1920,11 @@ def _apply_closest_residue_sticks_and_lines(
     closest = _closest_protein_residues(rec_atoms, lig_atoms, n=n_residues)
     pocket_cartoon_opacity = 0.48 if light_receptor else 0.42
     for chain, resi in closest:
+        stick_style = (
+            {"radius": 0.12, "color": "0x9ec5ff"}
+            if light_receptor
+            else {"radius": 0.14, "colorscheme": {"prop": "elem", "map": elem_map}}
+        )
         view.setStyle(
             {"model": model_rec, "chain": chain, "resi": resi},
             {
@@ -1927,10 +1932,7 @@ def _apply_closest_residue_sticks_and_lines(
                     "color": f"0x{pocket_cartoon_hex}",
                     "opacity": pocket_cartoon_opacity,
                 },
-                "stick": {
-                    "radius": 0.12 if light_receptor else 0.14,
-                    "colorscheme": {"prop": "elem", "map": elem_map},
-                },
+                "stick": stick_style,
             },
         )
         if light_receptor:
