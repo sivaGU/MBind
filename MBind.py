@@ -1937,7 +1937,7 @@ def _apply_closest_residue_sticks_and_lines(
         )
         if light_receptor:
             # Add carbon-only dots on the selected closest residues so carbon atoms are visibly distinct.
-            view.setStyle(
+            view.addStyle(
                 {"model": model_rec, "chain": chain, "resi": resi, "elem": "C"},
                 {"sphere": {"radius": 0.19, "color": f"0x{RECEPTOR_VIZ_POCKET_CARBON_DOT_HEX}"}},
             )
