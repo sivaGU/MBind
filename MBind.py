@@ -173,6 +173,21 @@ def render_home_page():
         "Use it to script batch runs after maps are prepared."
     )
 
+    st.divider()
+    st.subheader("Citation & Contact")
+    st.markdown(
+        "**Please cite MBind as:**\n\n"
+        "Ganesh, H.; Mada, S.; Aryal, S.; Zwa, R.; Diaz, K.L.; Patel, I.; Dakshanamurthy, S. "
+        "MBind: A Web-Based Platform for Metalloprotein and Nonmetalloprotein Docking with Optional ML Docking Integration. "
+        "*Molecules* **2026**, *31*, 2703. "
+        "[https://doi.org/10.3390/molecules31152703](https://doi.org/10.3390/molecules31152703)."
+    )
+    st.markdown(
+        "**For Contact:** Dr. Sivanesan Dakshanamurthy, PhD, MBA  \n"
+        "[sivanesan@innsciteai.com](mailto:sivanesan@innsciteai.com)  \n"
+        "[sd233@georgetown.edu](mailto:sd233@georgetown.edu)"
+    )
+
 def render_gnina_documentation_page():
     st.header("GNINA ML Docking - Documentation")
     st.write(
@@ -4049,4 +4064,3 @@ def build_ad4_maps(
 def build_ad4_maps_for_selection(*args, **kwargs):
     """Backward-compatible wrapper for legacy code paths."""
     return build_ad4_maps(*args, **kwargs)
-
