@@ -174,22 +174,24 @@ def render_home_page():
     )
 
     st.divider()
+
     st.subheader("Citation")
+    st.markdown(
+        "Ganesh, H.; Mada, S.; Aryal, S.; Zwa, R.; Diaz, K.L.; Patel, I.; Dakshanamurthy, S. "
+        "MBind: A Web-Based Platform for Metalloprotein and Nonmetalloprotein Docking with Optional ML Docking Integration. "
+        "*Molecules* **2026**, *31*, 2703. "
+        "[https://doi.org/10.3390/molecules31152703](https://doi.org/10.3390/molecules31152703)."
+    )
 
-st.markdown(
-    "Ganesh, H.; Mada, S.; Aryal, S.; Zwa, R.; Diaz, K.L.; Patel, I.; Dakshanamurthy, S. "
-    "MBind: A Web-Based Platform for Metalloprotein and Nonmetalloprotein Docking with Optional ML Docking Integration. "
-    "*Molecules* **2026**, *31*, 2703. "
-    "[https://doi.org/10.3390/molecules31152703](https://doi.org/10.3390/molecules31152703)."
-)
-
-st.subheader("Contact Information")
-
-st.markdown(
-    "**For Contact:** Dr. Sivanesan Dakshanamurthy, PhD, MBA. "
-    "[sivanesan@innsciteai.com](mailto:sivanesan@innsciteai.com); "
-    "[sd233@georgetown.edu](mailto:sd233@georgetown.edu)"
-)
+    st.subheader("Contact Information")
+    st.markdown(
+        '<p style="margin: 0;">'
+        '<strong>For Contact:</strong> Dr. Sivanesan Dakshanamurthy, PhD,MBA. '
+        '<a href="mailto:sivanesan@innsciteai.com">sivanesan@innsciteai.com</a>; '
+        '<a href="mailto:sd233@georgetown.edu">sd233@georgetown.edu</a>'
+        '</p>',
+        unsafe_allow_html=True,
+    )
 
 def render_gnina_documentation_page():
     st.header("GNINA ML Docking - Documentation")
