@@ -186,7 +186,7 @@ def render_home_page():
     st.subheader("Contact Information")
     st.markdown(
         '<p style="margin: 0;">'
-        '<strong>For Contact:</strong> Dr. Sivanesan Dakshanamurthy, PhD,MBA. '
+        '<strong>For Contact:</strong> Dr. Sivanesan Dakshanamurthy, PhD, MBA. '
         '<a href="mailto:sivanesan@innsciteai.com">sivanesan@innsciteai.com</a>; '
         '<a href="mailto:sd233@georgetown.edu">sd233@georgetown.edu</a>'
         '</p>',
