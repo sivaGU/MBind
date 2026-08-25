@@ -2852,15 +2852,10 @@ if page_mode == "gnina":
         "for detailed instructions."
     )
 
-# Working directory chooser
-work_dir_input = st.text_input(
-    "Working directory",
-    value=str(Path.cwd()),
-    help="All folders (prepared_ligands, ad4_maps, outputs) will be created here."
-)
+# Working directory (kept internal; not displayed in the UI)
+work_dir_input = str(Path.cwd())
 work_dir = Path(work_dir_input).expanduser().resolve()
 work_dir.mkdir(parents=True, exist_ok=True)
-st.caption(f"Using working directory: `{work_dir}`")
 
 # Demo preset controls
 _demo_default_center: Optional[Tuple[float, float, float]] = None
